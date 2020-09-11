@@ -1,0 +1,131 @@
+<div class="container">
+	<div class="row">
+		<div class="hidden-xs col-md-2"></div>
+		<div class="col-md-10">
+			<table class="table" [mfData]="productList | dataFilter : filterQuery" #mf="mfDataTable" [mfRowsOnPage]="rowsOnPage" [(mfSortBy)]="sortBy" [(mfSortOrder)]="sortOrder">
+				<thead>
+					<tr>
+						<th colspan="5">
+							<div class="row hidden-xs ">
+								<div class="col-md-9">
+									Filter by Title:
+									<input class="form-control" [(ngModel)]="filterQuery"/>
+								</div>
+								<div class="col-md-3">
+									<label class="label-control">Rows on page</label>
+									<select class="form-control " [(ngModel)]="rowsOnPage">
+										<option [ngValue]="5">5</option>
+										<option [ngValue]="10">10</option>
+										<option [ngValue]="15">15</option>
+									</select>
+								</div>
+							</div>
+							<div class="row hidden-xs ">	
+								<div class="col-xs-4">
+									<div class="row">
+										<label class="col-xs-12 label-control">Sort by</label>
+									</div>
+									<div class="col-xs-6">
+										<div class="row">
+											<select class="form-control" [(ngModel)]="sortBy">
+												<option ngValue="price">Price</option>
+												<option ngValue="title">Title</option>
+												<option ngValue="category">Category</option>
+											</select>
+										</div>
+									</div>
+									<div class="col-xs-6">
+										<div class="row">
+											<select class="form-control" [(ngModel)]="sortOrder">
+												<option ngValue="asc">Ascending</option>
+												<option ngValue="desc">Descending</option>
+											</select>
+										</div>
+									</div>
+								</div>
+							</div>
+						</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr *ngFor = "let product of mf.data" class="col-lg-4 col-md-4 col-sm-6 col-xs-12">
+						<div >
+							<div  style="margin:30px">
+								<a (click)="onSelect(product)">
+									<img class="img-responsive" src="{{serverPath}}/image/product/{{product.id}}.png" alt="Lights" style="width:100%">
+									<div class="caption">
+										<p style="color: #666666;text-align: center;">${{product.price}}<span>|</span><span style="color: #1F4851">{{product.title}}</span></p>
+									</div>
+								</a>
+							</div>
+						</div>
+						</tr>
+					</tbody>
+					<tfoot>
+						<tr>
+							<td colspan="5">
+								<mfBootstrapPaginator [rowsOnPageSet]="[5,10,15]"></mfBootstrapPaginator>
+							</td>
+						</tr>
+					</tfoot>
+				</table>
+			</div>
+		</div>
+	</div>
+
+<!-- <div class="row">
+<div class="c0l-md-4">
+	<h1 style="color: #45768E;text-align: center;">Starter Sets</h1>
+	<p style="color: #1F4851;text-align: center;">All you need to get shaving with Harry’s – in one tidy box.</p>
+</div>
+<div class="row">
+  <div class="col-md-4 col-sm-12" *ngFor="let product of productList1">
+    <div  style="margin:80px">
+      <a (click)="onSelect(product)">
+        <img class="img-responsive" src="{{serverPath}}/image/product/{{product.id}}.png" alt="Lights" style="width:100%">
+        <div class="caption">
+          <p style="color: #666666;text-align: center;">${{product.price}}<span>|</span><span style="color: #1F4851">{{product.title}}</span></p>
+        </div>
+      </a>
+    </div>
+  </div>
+</div>
+</div>
+<hr>
+<div >
+<div>
+	<h1 style="color: #45768E;text-align: center;">Blades & Refill Packs</h1>
+	<p style="color: #1F4851;text-align: center;">Get more shaving essentials.</p>
+</div>
+<div class="row">
+  <div class="col-md-4" *ngFor="let product of productList2">
+    <div  style="margin:80px">
+      <a (click)="onSelect(product)">
+        <img class="img-responsive" src="{{serverPath}}/image/product/{{product.id}}.png" alt="Lights" style="width:100%">
+        <div class="caption">
+          <p style="color: #666666;text-align: center;">${{product.price}}<span>|</span><span style="color: #1F4851">{{product.title}}</span></p>
+        </div>
+      </a>
+    </div>
+  </div>
+</div>
+</div>
+<hr style="color:#1F4851;outline-width: thin;">
+<div >
+<div>
+	<h1 style="color: #45768E;text-align: center;">Grooming Supplies</h1>
+	<p style="color: #1F4851;text-align: center;">Products designed to help you make your morning easier.</p>
+</div>
+<div class="row">
+  <div class="col-md-4" *ngFor="let product of productList3">
+    <div  style="margin:80px">
+      <a (click)="onSelect(product)">
+        <img class="img-responsive" src="{{serverPath}}/image/product/{{product.id}}.png" alt="Lights" style="width:100%">
+        <div class="caption">
+          <p style="color: #666666;text-align: center;">${{product.price}}<span>|</span><span style="color: #1F4851">{{product.title}}</span></p>
+        </div>
+      </a>
+    </div>
+  </div>
+</div>
+</div> -->

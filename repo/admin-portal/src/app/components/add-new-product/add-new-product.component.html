@@ -1,0 +1,66 @@
+<div class="container">
+	<div [hidden]="productAdded">
+		<h3 style="margin-top: 30px;">New Product Information <span style="font-size:small">* is a required field</span></h3>
+		<form (ngSubmit)="onSubmit()">
+			<md-grid-list cols="4" rowHeight="60px">
+				<md-grid-tile [colspan]="4" [rowspan]="1">
+					<md-input-container>
+						<input mdInput id="title" type="text" required [(ngModel)]="newProduct.title" name="title" placeholder="Title">
+					</md-input-container>
+				</md-grid-tile>
+			</md-grid-list>
+
+			<md-grid-list cols="4" rowHeight="60px">
+				<md-grid-tile [colspan]="2" [rowspan]="1">
+					<md-select placeholder="Category" id="category" name="category" [(ngModel)]="newProduct.category">
+						<md-option value="StarterSets">StarterSets</md-option>
+						<md-option value="Blades">Blades</md-option>
+						<md-option value="Grooming">Grooming</md-option>
+					</md-select>
+				</md-grid-tile>
+				<md-grid-tile [colspan]="2" [rowspan]="1">
+					<md-input-container>
+						<input mdInput id="color" type="text" [(ngModel)]="newProduct.color" name="color" placeholder="color">
+					</md-input-container>
+				</md-grid-tile>
+			</md-grid-list>
+			<md-grid-list cols="4" rowHeight="60px">
+				<md-grid-tile [colspan]="4" [rowspan]="1">
+					<md-input-container>
+						<input mdInput id="price" type="number" [(ngModel)]="newProduct.price" name="price" step="0.01" placeholder="Price">
+					</md-input-container>
+				</md-grid-tile>
+			</md-grid-list>
+			<md-grid-list cols="4" rowHeight="60px">
+				<md-grid-tile [colspan]="2" [rowspan]="1">
+					<md-input-container>
+						<input mdInput id="inStockNumber" type="number" [(ngModel)]="newProduct.inStockNumber" name="inStockNumber" step="0.01" placeholder="Numbers In Stock">
+					</md-input-container>
+				</md-grid-tile>
+				<md-grid-tile [colspan]="2" [rowspan]="1">
+					&nbsp;
+					<md-slide-toggle [color]="color" [checked]="checked" [disabled]="disabled" [(ngModel)]="newProduct.active" name="active">Active</md-slide-toggle>
+				</md-grid-tile>
+			</md-grid-list>
+
+			<md-input-container>
+				<textarea mdInput id="description" [(ngModel)]="newProduct.description" name="description" placeholder="Description" required></textarea>
+			</md-input-container>
+			Image &nbsp;
+			<input id="tile" type="file" id="bookImage" name="bookImage" (change)="uploadImageService.fileChangeEvent($event)">
+			<br><br>
+
+			<md-grid-list cols="20" rowHeight="60px">
+				<md-grid-tile [colspan]="2" [rowspan]="1">
+						<button class="mat-primary" md-raised-button type="submit">Add</button>
+				</md-grid-tile>
+				<md-grid-tile [colspan]="2" [rowspan]="1">
+					<a class="mat-warn" md-raised-button routerLink="/productList">Cancel</a>
+				</md-grid-tile>
+			</md-grid-list>
+		</form>
+	</div>
+	<div class="row" [hidden]="!productAdded">
+		<h3>Product added successfully!</h3>
+	</div>
+</div>

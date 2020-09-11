@@ -1,0 +1,17 @@
+/* URL: https://www.harrys.com/products */
+/* Extended Data: customer_id = undefined, customer_type = undefined, order_id = undefined, revenue = NaN */
+/* Actions Fired:
+* Id = 11252201015352, Name = Website Visit: No Post-Click, 30 Day Post-View
+* Id = 11252202091979, Name = Website Visit: 1 Day Post-Click, 90 Day Post-View
+* Id = 11252201258262, Name = View Any Harrys.com Page
+* Id = 11252201015353, Name = Website Visit: No Post-Click, 1 Day Post-View
+* Id = 11252201015354, Name = Website Visit: No Post-Click, 7 Day Post-View
+* Id = 11252202091976, Name = Website Visit: 1 Day Post-Click, 60 Day Post-View
+* Id = 11252202091977, Name = Website Visit: 60 Day Post-Click, No Post-View
+* Id = 11252202091431, Name = Website Visit: 30 Day Post-Click, 14 Day Post-View
+* Id = 11252202091978, Name = Website Visit: 90 Day Post-Click, No Post-View
+*/
+/* Third-Party Tags Fired:
+None
+*/
+!function(){function e(e){function t(e){for(var a=e.childNodes,o=0;o<a.length;o++)t(a[o]);if(e.tagName===n){var c=document.createElement(n);e.getAttribute(r)&&c.setAttribute(r,e.getAttribute(r)),c.text=e.text,e.parentNode.insertBefore(c,e),e.parentNode.removeChild(e)}}var n="SCRIPT",r="src",a=document.createDocumentFragment(),o=document.createElement("I");a.appendChild(o),o.innerHTML='<em style="display:none;">&nbsp;</em>'+e,t(o);var c=document.getElementsByTagName("script")[0];c.parentNode.insertBefore(a,c)}var t="";if(t){var n=document.write;document.write=function(t){try{n(t)}catch(r){e(t)}},e(t)}}();

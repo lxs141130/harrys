@@ -1,0 +1,1253 @@
+var Input = new Class({
+Implements:[ Events, Options ],
+options:{
+validateOnBlur:!0,
+required:!1,
+pattern:null,
+flashMessage:!0,
+setErrorClass:!0,
+appendErrors:!1,
+capitalize:!1,
+raiseError:!1
+},
+initialize:function(t, e) {
+if (this.setOptions(e), this.checks = [], this.name = t.get("name"), !t || "input" !== t.get("tag")) throw new Error("Input needs to take an Input Element");
+this.options.validateOnBlur && t.addEvent("blur", function() {
+try {
+this.validate();
+} catch (t) {}
+}.bind(this)), t.addEvent("input", function() {
+this.onValidationPass();
+}.bind(this)), t.addEvents({
+change:function() {
+this.fireEvent("change", this.getValue());
+}.bind(this)
+}), this.options.required && this.checks.push(this._checkRequired.bind(this)), this.options.capitalize && t.addEvent("input", function() {
+t.set("value", t.get("value").toUpperCase());
+}), this.el = t;
+},
+getValue:function() {
+return this.el.get("value");
+},
+setValue:function(t) {
+return this.el.set("value", t), this;
+},
+setPattern:function(t) {
+return this.el.set("pattern", t), this.setOptions({
+pattern:t
+}), this;
+},
+setPlaceholder:function(t) {
+return this.el.set("placeholder", t), this;
+},
+validate:function(t) {
+this.checks.length > 0 ? async.auto(this.checks, function(e, i) {
+t && t(e, i), e ? this.onValidationFailure(e, this.options.raiseError) :this.onValidationPass();
+}.bind(this)) :t && t(null, {
+success:!0
+});
+},
+onValidationPass:function() {
+return this.options.setErrorClass && this.el.removeClass("error"), this.options.appendErrors && this.el.getParent().getElements(".error-msg").destroy(), 
+this;
+},
+onValidationFailure:function(t, e) {
+if (this.options.setErrorClass && this.el.addClass("error"), this.options.appendErrors) {
+var i = this.el.getParent().getElements(".error-msg");
+i.length > 0 ? i.set("text", t) :new Element("span.error-msg", {
+text:t
+}).inject(this.el, "after");
+}
+if (this.options.flashMessage && new Flash(t, "errors"), e) throw new Error(t);
+return this;
+},
+_checkRequired:function(t) {
+var e = this.el.get("value");
+e ? t(null, {
+success:!0
+}) :t("Missing Required Field");
+},
+enable:function() {
+this.el.set("disabled", "");
+},
+disable:function() {
+this.el.set("disabled", "disabled");
+},
+clear:function() {
+this.setValue("");
+}
+}), RegexInput = new Class({
+Extends:Input,
+options:{
+testFailureMsg:"Input Invalid"
+},
+initialize:function(t, e) {
+if (!e || !e.regex) throw new Error("RegexInput needs RegExp for validating");
+if (!(e.regex instanceof RegExp)) {
+if ("string" != typeof e.regex) throw new Error("RegexInput needs RegExp for validating");
+e.regex = new RegExp(e.regex);
+}
+this.setOptions(e), this.parent(t, this.options), this.checks.push(this._checkRegex.bind(this));
+},
+setRegex:function(t) {
+if (!(t instanceof RegExp)) {
+if ("string" != typeof t) throw new Error("RegexInput needs RegExp for validating");
+t = new RegExp(t);
+}
+return this.setOptions({
+regex:t
+}), this;
+},
+_checkRegex:function(t) {
+var e = this.el.get("value");
+"" === e || this.options.regex.test(e) ? t(null, {
+success:!0
+}) :t(this.options.testFailureMsg);
+}
+}), Select = new Class({
+Extends:Input,
+initialize:function(t, e) {
+function i() {
+try {
+this.validate();
+} catch (t) {}
+}
+if (this.setOptions(e), this.checks = [], !t || "select" !== t.get("tag")) throw new Error("Select needs to take an Select Element");
+this.name = t.get("name"), t.addEvents({
+change:function() {
+this.fireEvent("change", this.getValue());
+}.bind(this)
+}), this.options.validateOnBlur && t.addEvents({
+blur:i.bind(this),
+change:i.bind(this)
+}), this.options.required && this.checks.push(this._checkRequired.bind(this)), this.el = t;
+},
+replaceOptionEls:function(t, e) {
+return this.el.empty(), this.addOptionEl(t, "", {
+disabled:"disabled",
+selected:"selected"
+}), _.each(e, function(t, e) {
+this.addOptionEl(t, e);
+}.bind(this)), this;
+},
+updateOptionEls:function(t) {
+return _.each(t, function(t) {
+this.updateOptionEl(t.text, t.value, t.other_properties);
+}.bind(this)), this;
+},
+getOptionEls:function() {
+return this.el.getElements("option");
+},
+findOptionEl:function(t) {
+return _.find(this.getOptionEls(), function(e) {
+return e.get("value") === t;
+});
+},
+addOptionEl:function(t, e, i) {
+var s = _.extend({
+text:t,
+value:e
+}, i);
+return this.el.adopt(new Element("option", s)), this;
+},
+removeOptionEl:function(t) {
+return this.findOptionEl(t).destroy(), this;
+},
+updateOptionEl:function(t, e, i) {
+var s = this.findOptionEl(e), n = _.extend({
+text:t,
+value:e
+}, i);
+return s.set(n), this;
+}
+}), Toggle = new Class({
+Implements:Events,
+initialize:function(t) {
+this.root_el = t, this.choices = this.root_el.getElements('input[type="radio"]'), 
+_.each(this.choices, function(t) {
+t.addEvent("change", function() {
+t.get("checked") !== !0 || this.noEvent || this.fireEvent("change", t.get("value"));
+}.bind(this));
+}.bind(this));
+},
+getCheckedChoice:function() {
+return this.root_el.getElement('input[type="radio"]:checked');
+},
+getValue:function() {
+return this.getCheckedChoice().get("value");
+},
+setValue:function(t, e) {
+e = e || {}, this.noEvent = e.noEvent;
+var i = this.root_el.getElement('input[value="' + t + '"]');
+return _.each(this.choices, function(t) {
+t.set("checked", !1);
+}), i.set("checked", !0), this.noEvent || this.fireEvent("change", i.get("value")), 
+this.noEvent = !1, this;
+},
+enable:function() {
+_.each(this.choices, function(t) {
+t.set("disabled", "");
+});
+},
+disable:function() {
+_.each(this.choices, function(t) {
+t.set("disabled", "disabled");
+});
+}
+}), PhoneInput = new Class({
+Extends:Input,
+options:{
+numberTooShortMsg:I18n.t("js.AddressForm.errors.phone_number_too_short"),
+numberTooLongMsg:I18n.t("js.AddressForm.errors.phone_number_too_long")
+},
+initialize:function(t, e) {
+this.setOptions(e), this.parent(t, this.options), this.checks.push(this._checkNumber.bind(this));
+},
+_checkNumber:function(t) {
+var e = this.el.get("value");
+e = e.replace(/\D/g, ""), 0 === e.length || 10 === e.length ? t(null, {
+success:!0
+}) :e.length < 10 ? t(this.options.numberTooShortMsg) :e.length > 15 && t(this.options.numberTooLongMsg);
+}
+}), Harrys = Harrys || {}, AddressForm = new Class({
+Implements:[ Events, Options ],
+validations:[],
+options:{},
+disabledAddressTemplate:'<span class="line"><%- name %></span><span class="line"><%- address1 %></span><span class="line"><%- address2 %></span><span class="line"><%- city %>, <%- state %> <%- zip %></span><span class="line"><%- country %></span>',
+initialize:function(t, e) {
+this.setOptions(e), this.root_el = t, this.name = this.options.name, this.inputs = {}, 
+this.country_toggle = new Toggle(this.root_el.getElement(".country.toggle")), this.country = this.country_toggle.getValue(), 
+this.disabledAddressTemplate = _.template(this.disabledAddressTemplate), this.disabledAddressContainer = this.root_el.getParent().getElement(".disabled-address"), 
+this._setupInputs(), this.country_toggle.addEvent("change", this._onCountryChange.bind(this)), 
+this.inputs.zip.addEvent("change", this._onZipChange.bind(this)), this.inputs.address_line_1.addEvent("change", this._checkForPOBox.bind(this)), 
+this.inputs.address_line_2.addEvent("change", this._checkForPOBox.bind(this)), this.inputs.state.addEvent("change", this._checkForPOBox.bind(this)), 
+this.addValidation(this._checkInputs.bind(this)), this.addValidation(this._checkProvincePostalCode.bind(this));
+},
+_setupInputs:function() {
+var t = {
+required:!0,
+appendErrors:!0,
+flashMessage:!1
+};
+this.inputs.name = new Input(this.root_el.getElement("input.name"), t), this.inputs.address_line_1 = new Input(this.root_el.getElement("input.address_line_1"), t), 
+this.inputs.address_line_2 = new Input(this.root_el.getElement("input.address_line_2"), {
+appendErrors:!0,
+flashMessage:!1
+}), this.inputs.city = new Input(this.root_el.getElement("input.city"), t), this.inputs.state = new Select(this.root_el.getElement("select.state"), t), 
+this.inputs.state.el.addEvent("change", this._onStateChange.bind(this)), this.inputs.zip = new RegexInput(this.root_el.getElement("input.zip"), {
+required:!0,
+regex:Harrys.zip_format(this.country),
+appendErrors:!0,
+flashMessage:!1,
+capitalize:!0
+}), this.root_el.getElement("input.telephone") && (this.inputs.telephone = new PhoneInput(this.root_el.getElement("input.telephone"), {
+appendErrors:!0,
+flashMessage:!1
+})), this.is_po_box = this._isPoBox();
+},
+_onCountryChange:function(t) {
+this.country = t, this.inputs.zip.setPattern(Harrys.COUNTRIES[this.country].zip_pattern), 
+this.inputs.zip.setRegex(Harrys.zip_format(this.country)), this.inputs.zip.setPlaceholder(Harrys.COUNTRIES[this.country].zip_label);
+var e = "US" === this.country ? "State" :"Province/Territory", i = Object.map(Harrys.COUNTRIES[this.country].states, function(t, e) {
+return e;
+});
+this.inputs.state.replaceOptionEls(e, i), this.fireEvent("country_change", t);
+},
+_onZipChange:function(t) {
+this.zip = t, this.fireEvent("zip_change", this.inputs.zip);
+},
+_onStateChange:function() {
+this.fireEvent("state_change", this.inputs.state.getValue());
+},
+_isPoBox:function() {
+return !!this._isApoFpo() || (Harrys.PO_BOX_REGEX.test(this.inputs.address_line_1.getValue()) || Harrys.PO_BOX_REGEX.test(this.inputs.address_line_2.getValue()));
+},
+_checkForPOBox:function() {
+this._setPoBox(this._isPoBox());
+},
+_setPoBox:function(t) {
+var e = this.is_po_box;
+e != t && (this.is_po_box = t, this.fireEvent("po_box_change"));
+},
+getAddress:function() {
+var t = _.reduce(this.inputs, function(t, e, i) {
+return t[i] = e.getValue(), t;
+}, {});
+return t.is_po_box = this._isPoBox(), t.country = this.country_toggle.getValue(), 
+t.country_full = Harrys.COUNTRIES[this.country_toggle.getValue()].full_name, t;
+},
+getValue:function() {
+return this.getAddress();
+},
+setAddress:function(t) {
+return t.country && this.country_toggle.setValue(t.country), _.each(this.inputs, function(e, i) {
+t[i] && e.setValue(t[i]).onValidationPass();
+}), this;
+},
+clearInputs:function() {
+return _.each(this.inputs, function(t) {
+t.setValue("").onValidationPass();
+}), this.country_toggle.setValue("US"), this;
+},
+_isApoFpo:function() {
+return _.contains(Harrys.APO_FPO_CODES, this.inputs.state.getValue());
+},
+validate:function(t) {
+this.validations.length > 0 ? async.auto(this.validations, t) :t(null, {
+success:!0
+});
+},
+addValidation:function(t) {
+this.validations.push(t);
+},
+_checkInputs:function(t) {
+var e = [];
+_.each(this.inputs, function(t) {
+t.validate(function(t) {
+t && e.push(t);
+});
+}), e.length > 0 ? t(_.uniq(e)) :t(null, {
+success:!0
+});
+},
+_checkProvincePostalCode:function(t) {
+var e, i;
+"CA" == this.country && (e = this.inputs.state.getValue(), i = this.inputs.zip.getValue(), 
+_.contains(Harrys.CANADA_POSTAL_PREFIXES[e], i[0]) ? t(null, {
+success:!0
+}) :(this.inputs.state.onValidationFailure(I18n.t("js.AddressForm._checkProvincePostalCode.ca_postal_code_mismatch")), 
+this.inputs.zip.onValidationFailure(I18n.t("js.AddressForm._checkProvincePostalCode.ca_province_mismatch")), 
+t(I18n.t("js.AddressForm._checkProvincePostalCode.ca_postal_code_province_mismatch")))), 
+t(null, {
+success:!0
+});
+},
+enable:function() {
+return this.country_toggle.enable(), _.each(this.inputs, function(t) {
+t.enable();
+}), this;
+},
+disable:function() {
+return this.country_toggle.disable(), _.each(this.inputs, function(t) {
+t.disable();
+}), this;
+},
+setDisabledAddress:function(t, e) {
+var i = this.disabledAddressTemplate({
+name:t.name || t.first_name + " " + t.last_name,
+address1:t.address_line_1,
+address2:t.address_line_2,
+city:t.city,
+state:t.state,
+zip:t.zip,
+country:t.country_full.replace(/\w\S*/g, function(t) {
+return t.charAt(0).toUpperCase() + t.substr(1).toLowerCase();
+})
+});
+this.disabledAddressContainer.set("html", i), e && this.disabledAddressContainer.show();
+},
+hideDisabledAddress:function() {
+this.disabledAddressContainer.hide();
+},
+show:function() {
+this.fireEvent("country_change", this.country), this.root_el.show();
+},
+hide:function() {
+this.root_el.hide();
+}
+}), CreditCardInput = new Class({
+Extends:RegexInput,
+options:{
+regex:/[0-9-\s]+/,
+required:!0,
+testFailureMsg:I18n.t("js.Inputs.CreditCardInput.error")
+},
+initialize:function(t, e) {
+this.setOptions(e), this.parent(t, this.options), this.checks.push(this._luhnCheck.bind(this));
+},
+_luhnCheck:function(t) {
+var e = this.el.get("value"), i = 0, s = 0, n = !1;
+e = e.replace(/\D/g, "");
+for (var a = e.length - 1; a >= 0; a--) {
+var o = e.charAt(a);
+s = parseInt(o, 10), n && (s *= 2) > 9 && (s -= 9), i += s, n = !n;
+}
+i % 10 === 0 ? t(null, {
+success:!0
+}) :t(this.options.testFailureMsg);
+}
+}), MonthSelect = new Class({
+Extends:Select,
+clear:function() {
+var t = new Date();
+this.setValue(t.getMonth() + 1);
+}
+}), YearSelect = new Class({
+Extends:Select,
+clear:function() {
+var t = new Date();
+this.setValue(t.getFullYear());
+}
+}), Harrys = Harrys || {}, PaymentForm = new Class({
+Implements:[ Events, Options ],
+validations:[],
+options:{
+disabled_fields:[]
+},
+initialize:function(t, e) {
+this.setOptions(e), this.root_el = t, this.name = this.options.name, this.inputs = {}, 
+this._setupInputs(), this.addValidation(this._checkInputs.bind(this)), this.addValidation(this._checkExpirationDate.bind(this));
+},
+_setupInputs:function() {
+var t = {
+required:!0,
+appendErrors:!0,
+flashMessage:!1
+};
+_.contains(this.options.disabled_fields, "card_number") || (this.inputs.card_number = new CreditCardInput(this.root_el.getElement("input.card_number"), t)), 
+_.contains(this.options.disabled_fields, "month") || (this.inputs.month = new MonthSelect(this.root_el.getElement("select.month"), t)), 
+_.contains(this.options.disabled_fields, "year") || (this.inputs.year = new YearSelect(this.root_el.getElement("select.year"), t)), 
+_.contains(this.options.disabled_fields, "ccv") || (this.inputs.ccv = new Input(this.root_el.getElement("input.ccv"), t)), 
+_.each(this.options.disabled_fields, function(t) {
+this.root_el.getElement("." + t).set("disabled", !0);
+}, this);
+},
+getData:function() {
+return _.reduce(this.inputs, function(t, e, i) {
+return t[i] = e.getValue(), t;
+}, {});
+},
+getValue:function() {
+return this.getData();
+},
+setData:function(t) {
+_.each(this.inputs, function(e, i) {
+t[i] && e.setValue(t[i]);
+});
+},
+clearInputs:function() {
+_.each(this.inputs, function(t) {
+t.clear();
+});
+},
+validate:function(t) {
+this.validations.length > 0 ? async.auto(this.validations, t) :t(null, {
+success:!0
+});
+},
+addValidation:function(t) {
+this.validations.push(t);
+},
+_checkInputs:function(t) {
+var e = [];
+_.each(this.inputs, function(t) {
+t.validate(function(t) {
+t && e.push(t);
+});
+}), e.length > 0 ? t(_.uniq(e)) :t(null, {
+success:!0
+});
+},
+_checkExpirationDate:function(t) {
+var e = this.inputs.month.getValue().toInt(), i = this.inputs.year.getValue().toInt(), s = moment();
+i === s.year() && e < s.month() + 1 ? (this.inputs.month.onValidationFailure(I18n.t("js.PaymentForm._checkExpirationDate.error")), 
+this.inputs.year.onValidationFailure(I18n.t("js.PaymentForm._checkExpirationDate.error")), 
+t(I18n.t("js.PaymentForm._checkExpirationDate.error"))) :t(null, {
+success:!0
+});
+}
+}), DetailsSection = new Class({
+Implements:[ Events, Options ],
+options:{
+validation_success_message:I18n.t("js.profile.details.success")
+},
+$validations:[],
+initialize:function(t, e, i) {
+this.setOptions(i), this.root_el = t, this.forms = _.isArray(e) ? e :[ e ], this.show_view = this.root_el.getElement(".view.show"), 
+this.form_view = this.root_el.getElement(".view.form"), this.show_view && (this.edit_link = this.show_view.getElement(".link.edit")), 
+this.edit_link && this.edit_link.addEvents({
+click:function() {
+this.show_view && this.show_view.hide(), this.form_view && this.form_view.show();
+}.bind(this),
+mouseover:function() {
+this.show_view && this.show_view.addClass("hover");
+}.bind(this),
+mouseout:function() {
+this.show_view && this.show_view.removeClass("hover");
+}.bind(this)
+}), this.form_view && (this.cancel_link = this.form_view.getElement(".link.cancel")), 
+this.cancel_link && this.cancel_link.addEvent("click", function() {
+this.form_view && this.form_view.hide(), this.show_view && this.show_view.show();
+}.bind(this));
+var s = this.root_el.getElement("button");
+s && (this.button = new Button(s), this.button.addEvent("click", function() {
+this.button.disable(), this.validate(function(t, e) {
+e = e || {}, e.msg = e.msg || this.options.validation_success_message, t ? (t.message ? new Flash(t.message, "error") :t.messages && _.each(t.messages, function(t) {
+new Flash(t, "error");
+}), this.button.enable()) :(new Flash(e.msg, "notice"), this.form_view && this.show_view && (this.form_view.hide(), 
+this.show_view.show()), this.button.enable());
+}.bind(this));
+}.bind(this))), _.each(this.forms, function(t) {
+this.addValidation(t.validate.bind(t));
+}.bind(this)), this.addValidation(this.request.bind(this));
+},
+request:function(t) {
+t(null, {
+success:!0
+});
+},
+_sendRequest:function(t, e, i) {
+new SignedRequest.JSON({
+url:t,
+data:e,
+onSuccess:function(t) {
+t.success ? this._success(t, i) :this._error(t, i);
+}.bind(this),
+onFailure:function(t) {
+this._failure(t, i);
+}.bind(this)
+}).send();
+},
+_success:function(t, e) {
+e(null, t);
+},
+_error:function(t, e) {
+var i = _.map(t.errors, function(t) {
+var e;
+switch (t.type) {
+case "validation":
+e = t.field.replace("_", " ") + " " + t.message, e.capitalize();
+break;
+
+default:
+e = t.message ? t.message :t;
+}
+return e;
+});
+e({
+messages:i
+});
+},
+_failure:function(t, e) {
+var i = I18n.t("global.error.cannot_connect_try_again");
+new Flash(i, "error"), e && e(i);
+},
+setFields:function(t) {
+return _.each(t, function(t, e) {
+var i = this.root_el.getElement('[data-field-name="' + e + '"]');
+i && i.set("text", t);
+}.bind(this)), this;
+},
+validate:function(t) {
+this.$validations.length > 0 ? async.series(this.$validations, t) :t(null, {
+success:!0
+});
+},
+addValidation:function(t) {
+this.$validations.push(t);
+}
+}), NameDetailsSection = new Class({
+Extends:DetailsSection,
+url:"/api/v1/UserService/updateName",
+request:function(t) {
+var e = _.reduce(this.forms, function(t, e) {
+return t[e.name] = e.getValue(), t;
+}, {});
+this._sendRequest(this.url, e, t);
+},
+_success:function(t, e) {
+this.setFields({
+name:t.data.first_name + " " + t.data.last_name
+}), e(null, t);
+}
+}), EmailPasswordDetailsSection = new Class({
+Extends:DetailsSection,
+url:"/api/v1/UserService/updateEmailPassword",
+request:function(t) {
+var e = _.reduce(this.forms, function(t, e) {
+return t[e.name] = e.getValue(), t;
+}, {});
+this._sendRequest(this.url, e, t);
+},
+_success:function(t, e) {
+this.setFields(t.data), e(null, t);
+}
+}), Kicksend = {
+mailcheck:{
+threshold:3,
+defaultDomains:[ "yahoo.com", "google.com", "hotmail.com", "gmail.com", "me.com", "aol.com", "mac.com", "live.com", "comcast.net", "googlemail.com", "msn.com", "hotmail.co.uk", "yahoo.co.uk", "facebook.com", "verizon.net", "sbcglobal.net", "att.net", "gmx.com", "mail.com", "outlook.com", "icloud.com" ],
+defaultTopLevelDomains:[ "co.jp", "co.uk", "com", "net", "org", "info", "edu", "gov", "mil", "ca" ],
+run:function(t) {
+t.domains = t.domains || Kicksend.mailcheck.defaultDomains, t.topLevelDomains = t.topLevelDomains || Kicksend.mailcheck.defaultTopLevelDomains, 
+t.distanceFunction = t.distanceFunction || Kicksend.sift3Distance;
+var e = function(t) {
+return t;
+}, i = t.suggested || e, s = t.empty || e, n = Kicksend.mailcheck.suggest(encodeURI(t.email), t.domains, t.topLevelDomains, t.distanceFunction);
+return n ? i(n) :s();
+},
+suggest:function(t, e, i, s) {
+t = t.toLowerCase();
+var n = this.splitEmail(t), a = this.findClosestDomain(n.domain, e, s);
+if (a) {
+if (a != n.domain) return {
+address:n.address,
+domain:a,
+full:n.address + "@" + a
+};
+} else {
+var o = this.findClosestDomain(n.topLevelDomain, i);
+if (n.domain && o && o != n.topLevelDomain) {
+var l = n.domain;
+return a = l.substring(0, l.lastIndexOf(n.topLevelDomain)) + o, {
+address:n.address,
+domain:a,
+full:n.address + "@" + a
+};
+}
+}
+return !1;
+},
+findClosestDomain:function(t, e, i) {
+var s, n = 99, a = null;
+if (!t || !e) return !1;
+i || (i = this.sift3Distance);
+for (var o = 0; o < e.length; o++) {
+if (t === e[o]) return t;
+s = i(t, e[o]), s < n && (n = s, a = e[o]);
+}
+return n <= this.threshold && null !== a && a;
+},
+sift3Distance:function(t, e) {
+if (null == t || 0 === t.length) return null == e || 0 === e.length ? 0 :e.length;
+if (null == e || 0 === e.length) return t.length;
+for (var i = 0, s = 0, n = 0, a = 0, o = 5; i + s < t.length && i + n < e.length; ) {
+if (t.charAt(i + s) == e.charAt(i + n)) a++; else {
+s = 0, n = 0;
+for (var l = 0; l < o; l++) {
+if (i + l < t.length && t.charAt(i + l) == e.charAt(i)) {
+s = l;
+break;
+}
+if (i + l < e.length && t.charAt(i) == e.charAt(i + l)) {
+n = l;
+break;
+}
+}
+}
+i++;
+}
+return (t.length + e.length) / 2 - a;
+},
+splitEmail:function(t) {
+var e = t.split("@");
+if (e.length < 2) return !1;
+for (var i = 0; i < e.length; i++) if ("" === e[i]) return !1;
+var s = e.pop(), n = s.split("."), a = "";
+if (0 == n.length) return !1;
+if (1 == n.length) a = n[0]; else {
+for (var i = 1; i < n.length; i++) a += n[i] + ".";
+n.length >= 2 && (a = a.substring(0, a.length - 1));
+}
+return {
+topLevelDomain:a,
+domain:s,
+address:e.join("@")
+};
+}
+}
+};
+
+"undefined" != typeof module && module.exports && (module.exports = Kicksend.mailcheck), 
+"undefined" != typeof window && window.jQuery && !function(t) {
+t.fn.mailcheck = function(t) {
+var e = this;
+if (t.suggested) {
+var i = t.suggested;
+t.suggested = function(t) {
+i(e, t);
+};
+}
+if (t.empty) {
+var s = t.empty;
+t.empty = function() {
+s.call(null, e);
+};
+}
+t.email = this.val(), Kicksend.mailcheck.run(t);
+};
+}(jQuery);
+
+var EmailInput = new Class({
+Extends:RegexInput,
+options:{
+regex:Harrys.VALIDATION.user.email,
+required:!0,
+showSuggestion:!0,
+testFailureMsg:I18n.t("js.Inputs.EmailInput.error")
+},
+initialize:function(t, e) {
+this.setOptions(e), this.parent(t, this.options), this.options.validateOnBlur && t.removeEvents("blur").addEvent("blur", function() {
+this.options.showSuggestion ? this._mailcheck(function(t) {
+t.suggestion || this.validate();
+}.bind(this)) :this.validate();
+}.bind(this));
+},
+_mailcheck:function(t) {
+Kicksend.mailcheck.run({
+email:this.getValue(),
+suggested:function(e) {
+this.el.addClass("suggestion");
+var i = this.el.getParent().getElement(".suggestion-msg");
+i || (i = new Element("span.suggestion-msg").inject(this.el, "after")), i.set("html", "Did you mean: <strong>" + e.full + "</strong>?"), 
+i.getElement("strong").removeEvents("click").addEvent("click", function() {
+this.setValue(e.full), this._mailcheck();
+}.bind(this)), t && t({
+suggestion:!0
+});
+}.bind(this),
+empty:function() {
+this.el.removeClass("suggestion"), this.el.getParent().getElements(".suggestion-msg").destroy(), 
+t && t({
+suggestion:!1
+});
+}.bind(this)
+});
+}
+}), Textarea = new Class({
+Extends:Input,
+initialize:function(t, e) {
+if (this.setOptions(e), this.checks = [], !t || "textarea" !== t.get("tag")) throw new Error("Textarea needs to take an Textarea Element");
+this.options.validateOnBlur && t.addEvent("blur", function() {
+this.validate();
+}.bind(this)), this.options.required && this.checks.push(this._checkRequired.bind(this)), 
+this.options.capitalize && t.addEvent("input", function() {
+t.set("value", t.get("value").toUpperCase());
+}), this.el = t;
+}
+}), Harrys = Harrys || {}, Modal = new Class({
+Implements:Events,
+initialize:function(t) {
+this.root_el = t, this.frame_el = this.root_el.getElement(".frame"), this.close_el = this.root_el.getElement("span.close"), 
+this.close_el.addEvent("click", function() {
+this.close(!0, !1);
+}.bind(this)), this.root_el.addEvent("click", function() {
+this.close(!0, !1);
+}.bind(this)), this.frame_el.addEvent("click", function(t) {
+t.stopPropagation();
+});
+},
+open:function() {
+return this.root_el.show(), this;
+},
+close:function() {
+return this.root_el.hide(), this;
+}
+}), AddressModal = new Class({
+Extends:Modal,
+initialize:function(t) {
+this.parent(t), this.message_el = this.root_el.getElement(".message"), this.suggestion_el = this.root_el.getElement(".suggestion"), 
+this.ignore_button = new Button(this.root_el.getElement("button.ignore")), this.change_address_button = new Button(this.root_el.getElement("button.continue")), 
+this.ignore_button.addEvent("click", function() {
+this.close(null, {
+success:!0
+});
+}.bind(this));
+},
+setupSuggestion:function(t) {
+this.message_el.set("text", I18n.t("js.Modals.AddressModal.setupSuggestion"));
+var e = {
+address_line_1:t.street1,
+address_line_2:t.street2 || "",
+city:t.city,
+state:t.state,
+zip:t.zip,
+country:t.country || ""
+};
+_.each(e, function(t, e) {
+var i = this.suggestion_el.getElement('[data-field="' + e + '"]');
+i && i.set("text", t);
+}.bind(this)), this.suggestion_el.show(), this.change_address_button.setText("Yes! Use this one instead"), 
+this.change_address_button.removeEvents("click").addEvent("click", function() {
+this.fireEvent("use_suggestion", e), this.close(null, {
+success:!0
+});
+}.bind(this));
+},
+setupNotFound:function() {
+this.message_el.set("html", I18n.t("js.Modals.AddressModal.setupNotFound")), this.suggestion_el.hide(), 
+this.change_address_button.setText("Fix Errors"), this.change_address_button.removeEvents("click").addEvent("click", function() {
+this.close(!0, !1);
+}.bind(this));
+},
+open:function(t, e) {
+this.callback = e, t.returned_address ? this.setupSuggestion(t.returned_address) :this.setupNotFound(), 
+this.root_el.show();
+},
+close:function(t, e) {
+this.callback(t, e), this.callback = null, this.root_el.hide();
+}
+}), ProductUnavailableModal = new Class({
+Extends:Modal,
+initialize:function(t) {
+this.parent(t), this.products_table = this.root_el.getElement("table.products"), 
+this.return_button = this.root_el.getElement("button.return"), this.continue_button = this.root_el.getElement("button.continue");
+},
+_setup:function(t, e) {
+this.products_table.empty().adopt(_.map(t, function(t) {
+return this._productTemplate(t);
+}.bind(this))), this.return_button.removeEvents("click").addEvent("click", function() {
+_.each(t, function(t) {
+Harrys.cart.setQuantity(t.key, 0);
+}), Harrys.warn_on_leave = !1, window.location = "/products";
+}), this.continue_button.removeEvents("click").addEvent("click", function() {
+_.each(t, function(t) {
+Harrys.cart.setQuantity(t.key, 0);
+}), Harrys.warn_on_leave = !1, window.location.reload(!0);
+}), e ? this.continue_button.hide() :this.continue_button.show();
+},
+_productTemplate:function(t) {
+var e = {};
+e.name = t.product.name;
+var i = [];
+t.product.color_slug && "chrome" !== t.product.color_slug && i.push(t.product.color), 
+t.product.pack_size && i.push(t.product.pack_size + " Pack"), t.customizations.engraving && i.push(t.customizations.engraving), 
+t.customizations.secondary_engraving && i.push(t.customizations.secondary_engraving), 
+e.customizations = i.join(", "), e.quantity = t.quantity;
+var s = t.customizations.interval;
+return s && (s /= 30), e.interval = s ? "Every " + s + " Month" + (s > 1 ? "s" :"") :"", 
+e.price = "$" + t.product.price.toInt().toFixed(2), e.total = "$" + (t.product.price * t.quantity).toInt().toFixed(2), 
+Elements.from(_.template('<tr class="product"><td class="name"><strong><%- name %></stong><span><%- customizations %></span></td><td class="quantity">Qty: <%- quantity %></td><td class="interval"><%- interval %></td><td class="price"><%- price %></td><td class="total"><%- total %></td></tr>', e));
+},
+open:function(t, e, i) {
+this.callback = i, this._setup(t, e), this.root_el.show();
+},
+close:function(t, e) {
+this.callback && this.callback(t, e), this.callback = null, this.root_el.hide();
+}
+}), ConfirmModal = new Class({
+Implements:[ Events, Options ],
+options:{
+message_text:"Are you sure you want to do that?",
+cancel_text:"No",
+continue_text:"Yes"
+},
+template:_.template('<div class="modal confirm background" style="display: none;"><div class="frame"><span class="close"></span><strong class="message"><%- message_text %></strong><% if (cancel_text) { %><button class="medium sentimental-blue cancel"><%- cancel_text %></button><% } %><% if (continue_text) { %><button class="medium blue continue"><%- continue_text %></button><% } %></div></div>'),
+initialize:function(t) {
+this.setOptions(t), this.root_el = Elements.from(this.template(this.options))[0], 
+this.frame_el = this.root_el.getElement(".frame"), this.close_el = this.root_el.getElement("span.close"), 
+this.close_el.addEvent("click", function() {
+this.close(!0, !1);
+}.bind(this)), this.message_el = this.root_el.getElement(".message");
+var e = this.root_el.getElement("button.cancel");
+e && (this.cancel_button = new Button(e));
+var i = this.root_el.getElement("button.continue");
+i && (this.continue_button = new Button(i)), this.cancel_button && this.cancel_button.addEvent("click", function() {
+this.close(!0);
+}.bind(this)), this.continue_button && this.continue_button.addEvent("click", function() {
+this.close(null, {
+success:!0
+});
+}.bind(this));
+},
+open:function(t) {
+this.callback = t, this.root_el.inject(document.getElement("body")).show();
+},
+close:function(t, e) {
+this.callback(t, e), this.callback = null, this.root_el.hide().dispose();
+}
+}), ShippingDetailsSection = new Class({
+Extends:DetailsSection,
+url:"/api/v1/ShippingAddressService/updateShippingAddressById",
+initialize:function(t, e, i) {
+this.parent(t, e, i), this.id = this.root_el.get("data-id"), this.remove_el = this.root_el.getElement(".link.remove"), 
+this.remove_el && this.remove_el.addEvent("click", function() {
+new ConfirmModal({
+message_text:"You're about to remove this shipping address. Are you sure you want to remove it?",
+cancel_text:"No, Do Not Remove It",
+continue_text:"Yes, Remove It"
+}).open(function(t) {
+var e;
+t || (e = new SignedRequest.JSON({
+url:"/api/v1/ShippingAddressService/removeShippingAddressById",
+data:{
+id:this.id
+},
+onSuccess:function(t) {
+t.success ? (this.fireEvent("removed", {
+data:t.data,
+section:this
+}), this.root_el.dispose()) :window.location.reload();
+}.bind(this),
+onFailure:function(t) {
+this._failure(t);
+}.bind(this)
+}), e.send());
+}.bind(this));
+}.bind(this));
+},
+request:function(t) {
+var e = _.reduce(this.forms, function(t, e) {
+return t[e.name] = e.getValue(), t;
+}, {
+id:this.id
+});
+this._sendRequest(this.url, e, t);
+},
+_success:function(t, e) {
+var i = this.id;
+this.id = t.data.id, t.data.address.name = t.data.address.name, this.setFields(t.data.address), 
+this.root_el.set("data-id", this.id), this.fireEvent("changed", {
+data:t.data,
+section:this,
+old_id:i
+}), e(null, t);
+}
+}), address_form_html = '<div class="form address <%- form_type %>_<%- id %> grid"><div class="toggle country col-1-1"><div><input type="radio" name="<%- form_type %>_<%- id %>[country]" value="US" id="<%- form_type %>_<%- id %>_country_us" <% if (!country || country==="US") { %> checked <% } %>><label for="<%- form_type %>_<%- id %>_country_us" class="us"><span class="img"></span> United States</label></div><div><input type="radio" name="<%- form_type %>_<%- id %>[country]" value="CA" id="<%- form_type %>_<%- id %>_country_ca" <% if (country==="CA") { %> checked <% } %>><label for="<%- form_type %>_<%- id %>_country_ca" class="ca"><span class="img"></span> Canada</label></div></div><div class="col-1-1"><label for="<%- form_type %>_<%- id %>_name" class="for-ie">Name</label><input id="<%- form_type %>_<%- id %>_name" type="text" placeholder="Name" name="<%- form_type %>_<%- id %>[name]" class="name" maxlength="100" value="<%- name %>"></div><div class="col-1-1"><label for="<%- form_type %>_<%- id %>_address_line_1" class="for-ie">Address Line 1</label><input id="<%- form_type %>_<%- id %>_address_line_1" type="text" placeholder="Address" name="<%- form_type %>_<%- id %>[address_line_1]" class="address_line_1" maxlength="30" value="<%- address_line_1 %>"></div><div class="col-1-1"><label for="<%- form_type %>_<%- id %>_address_line_2" class="for-ie">Address Line 2</label><input id="<%- form_type %>_<%- id %>_address_line_2" type="text" placeholder="Apt / Suite #" name="<%- form_type %>_<%- id %>[address_line_2]" class="address_line_2" maxlength="255" value="<%- address_line_2 %>"></div><div class="col-1-1"><label for="<%- form_type %>_<%- id %>_city" class="for-ie">City</label><input id="<%- form_type %>_<%- id %>_city" type="text" placeholder="City" name="<%- form_type %>_<%- id %>[city]" class="city" maxlength="255" value="<%- city %>"></div><div class="col-1-2 pad-r"><label for="<%- form_type %>_<%- id %>_state" class="for-ie">State</label><select id="<%- form_type %>_<%- id %>_state" name="<%- form_type %>_<%- id %>[state]" class="state"><option value="" disabled <%- (!state) ? "selected" : "" %>>State</option><% _.each(Harrys.COUNTRIES[country].states, function (state_name, state_code) { %><option value="<%- state_code %>" <%- (state===state_code) ? "selected" : "" %>><%- state_code %></option><% }); %></select></div><div class="col-1-2 pad-l"><label for="<%- form_type %>_<%- id %>_zip" class="for-ie">Zip/Postal</label><input id="<%- form_type %>_<%- id %>_zip" type="text" value="<%- zip %>" placeholder="<%- Harrys.COUNTRIES[country].zip_label %>" pattern="<%- Harrys.COUNTRIES[country].zip_pattern %>" name="<%- form_type %>_<%- id %>[zip]" class="zip" maxlength="11"></div><% if (form_type.indexOf("shipping") === 0) { %><div class="col-1-1"><label for="<%- form_type %>_<%- id %>_telephone" class="for-ie">Telephone</label><input id="<%- form_type %>_<%- id %>_telephone" type="text" value="<%- telephone %>" placeholder="Telephone" pattern="\\d*" name="<%- form_type %>_<%- id %>[telephone]" class="telephone" maxlength="20"></div><% } %><button class="blue medium">Save</button></div>', shipping_address_html = '<li data-id="<%- id %>"><div class="show view"><p><span data-field-name="name"><%- name %></span></p><p><span data-field-name="address_line_1"><%- address_line_1 %></span> <span data-field-name="address_line_2"><%- address_line_2 %></span></p><p><span data-field-name="city"><%- city %></span>, <span data-field-name="state"><%- state%></span> <span data-field-name="zip"><%- zip %></span></p><div class="right table"><div class="middle"><span class="link edit">Edit</span><br><span class="link remove">Remove</span></div></div></div><div class="form view" style="display: none;"><% var form_type = "shipping"; %>' + address_form_html + '<div class="right"><span class="link cancel">Cancel</span></div></div></li>', shipping_address_template = _.template(shipping_address_html), CreateShippingDetailsSection = new Class({
+Extends:DetailsSection,
+url:"/api/v1/ShippingAddressService/create",
+request:function(t) {
+var e = {};
+_.each(this.forms, function(t) {
+e[t.name] = t.getValue();
+}), this._sendRequest(this.url, e, t);
+},
+_success:function(t, e) {
+t.data.address.id = t.data.id;
+var i = Elements.from(shipping_address_template(t.data.address))[0], s = this.setupShippingSection(i);
+_.each(this.forms, function(t) {
+t.clearInputs();
+}), this.root_el.getElement("ul").adopt(i), this.fireEvent("created", {
+data:t.data,
+section:s
+}), e(null, t);
+},
+setupShippingSection:function(t) {
+var e = t.get("data-id"), i = new AddressForm(t.getElement(".form.shipping_" + e), {
+name:"shipping_address"
+});
+return new ShippingDetailsSection(t, i);
+}
+}), BillingProfile = new Class({
+initialize:function(t) {
+this.data = t;
+},
+toStripeFormat:function() {
+var t = this.data.billing_profile;
+return {
+number:t.card_number,
+cvc:t.ccv.replace(/\D+/, ""),
+exp_month:t.month,
+exp_year:t.year,
+name:t.name,
+address_line1:t.address_line_1,
+address_line2:t.address_line_2,
+address_city:t.city,
+address_state:t.state,
+address_zip:t.zip,
+address_country:t.country
+};
+}
+}), BillingDetailsSection = new Class({
+Extends:DetailsSection,
+url:"/api/v1/BillingProfileService/updateBillingProfileById",
+initialize:function(t, e, i) {
+this.parent(t, e, i), this.id = this.root_el.get("data-id"), this.remove_el = this.root_el.getElement(".link.remove"), 
+this.remove_el && this.remove_el.addEvent("click", function() {
+new ConfirmModal({
+message_text:"You're about to remove this billing profile. Are you sure you want to remove it?",
+cancel_text:"No, Do Not Remove It",
+continue_text:"Yes, Remove It"
+}).open(function(t) {
+var e;
+t || (e = new SignedRequest.JSON({
+url:"/api/v1/BillingProfileService/removeBillingProfileById",
+data:{
+id:this.id
+},
+onSuccess:function(t) {
+t.success ? (this.fireEvent("removed", {
+data:t.data,
+section:this
+}), this.root_el.dispose()) :window.location.reload();
+}.bind(this),
+onFailure:function(t) {
+this._failure(t);
+}.bind(this)
+}), e.send());
+}.bind(this));
+}.bind(this));
+},
+request:function(t) {
+var e = _.reduce(this.forms, function(t, e) {
+return t.billing_profile = _.extend(t.billing_profile, e.getValue()), t;
+}, {
+billing_profile:{}
+});
+new BillingProfile(e);
+this._sendRequest(this.url, {
+id:this.id,
+billing_profile:e.billing_profile
+}, t);
+},
+_success:function(t, e) {
+var i = this.id;
+this.id = t.data.id, t.data.card_number = "XXXX" + t.data.card_number.substr(-4), 
+this.setFields(t.data), this.root_el.set("data-id", t.data.id), this.fireEvent("changed", {
+data:t.data,
+section:this,
+old_id:i
+}), e(null, t);
+}
+}), payment_form_html = '<div class="form payment <%- form_type %>_<%- id %> grid"><div class="col-1-1"><p class="h6 black-blue">Credit / Debit Card Number</p><label for="<%- form_type %>_card_number" style="display: none;">Card Number</label><input id="<%- form_type %>_card_number" type="text" name="<%- form_type %>_<%- id %>[card_number]" placeholder="Card Number" class="card_number" value="<%- card_number %>"></div><div class="col-2-3 grid pad-r"><p class="black-blue col-1-1">Expiration Date</p><div class="col-1-2 pad-r"><label for="<%- form_type %>_month" style="display: none;">Month</label><select class="month" id="<%- form_type %>_month" name="<%- form_type %>_<%- id %>[month]"><% _(12).times(function(i){i++; %><option <%- month === i ? "selected" : "" %> value="<%- i %>"><%- ("0" + i).slice(-2) %></option><% }); %></select></div><div class="col-1-2 pad-l"><label for="<%- form_type %>_year" style="display: none;">Year</label><select class="year" id="<%- form_type %>_year" name="billing_new[year]"><% for (var y=moment().year(); y<(moment().year()+10); y++) { %><option <%- year === y ? "selected" :  "" %> value="<%- y %>"><%- y %></option><% } %></select></div></div><div class="col-1-3 pad-l"><p class="black-blue">Security Code</p><label for="<%- form_type %>_ccv" style="display: none;">CCV</label><input id="<%- form_type %>_ccv" type="text" class="ccv" name="<%- form_type %>_<%- id %>[ccv]" placeholder="CCV" value="XXX"></div></div>', billing_profile_html = '<li data-id="<%- id %>"><div class="show view"><p><span data-field-name="name"><%- name %></span> </p><p><span data-field-name="card_number"><%- card_number %></span></p><p><span data-field-name="address_line_1"><%- address_line_1 %></span> <span data-field-name="address_line_2"><%- address_line_2 %></span></p><p><span data-field-name="city"><%- city %></span>, <span data-field-name="state"><%- state %></span> <span data-field-name="zip"><%- zip %></span></p><div class="right table"><div class="middle"><span class="link edit">Edit</span><br><span class="link remove">Remove</span></div></div></div><div class="form view" style="display: none;"><% var form_type = "billing"; %>' + payment_form_html + address_form_html + '<div class="right table"><div class="middle"><span class="link cancel">Cancel</span></div></div></div></li>', billing_profile_template = _.template(billing_profile_html), CreateBillingDetailsSection = new Class({
+Extends:DetailsSection,
+url:"/api/v1/BillingProfileService/create",
+request:function(t) {
+var e = _.reduce(this.forms, function(t, e) {
+return t.billing_profile = _.extend(t.billing_profile, e.getValue()), t;
+}, {
+billing_profile:{}
+}), i = new BillingProfile(e);
+Stripe.card.createToken(i.toStripeFormat(), function(e, i) {
+i.error ? t(i.error) :this._sendRequest(this.url, {
+billing_profile:{
+stripe_card_token:i.id
+}
+}, t);
+}.bind(this));
+},
+_success:function(t, e) {
+t.data.number = "XXXX" + t.data.card_number.substr(-4);
+var i = Elements.from(billing_profile_template(t.data))[0], s = this.setupBillingSection(i);
+_.each(this.forms, function(t) {
+t.clearInputs();
+}), this.root_el.getElement("ul").adopt(i), this.fireEvent("created", {
+data:t.data,
+section:s
+}), e(null, t);
+},
+setupBillingSection:function(t) {
+var e = t.get("data-id"), i = t.getElement(".form.payment.billing_" + e), s = t.getElement(".form.address.billing_" + e), n = [];
+return i && n.push(new PaymentForm(i, {
+disabled_fields:[ "ccv", "card_number" ]
+})), s && n.push(new AddressForm(s)), new BillingDetailsSection(t, n);
+}
+}), IntervalInput = new Class({
+Extends:Input,
+initialize:function(t, e) {
+this.setOptions(e), this.parent(t, this.options), this.increase_el = this.el.getSiblings(".increase")[0], 
+this.decrease_el = this.el.getSiblings(".decrease")[0], this.text_el = this.el.getSiblings(".text")[0], 
+this.increase_el && this.increase_el.addEvent("click", function() {
+var t = this.el.get("value").toInt();
+t < 6 && this.el.set("value", ++t), this.updateText(t), this.fireEvent("change", this.getValue());
+}.bind(this)), this.decrease_el && this.decrease_el.addEvent("click", function() {
+var t = this.el.get("value").toInt();
+t > 1 && this.el.set("value", --t), this.updateText(t), this.fireEvent("change", this.getValue());
+}.bind(this));
+},
+updateText:function(t) {
+this.text_el.set("text", "Every " + t + " Month" + (1 !== t ? "s" :""));
+},
+getValue:function() {
+return 30 * this.el.get("value").toInt();
+}
+}), NextSendInput = new Class({
+Extends:Input,
+initialize:function(t, e) {
+this.setOptions(e), this.parent(t, this.options), this.increase_el = this.el.getSiblings(".increase")[0], 
+this.decrease_el = this.el.getSiblings(".decrease")[0], this.text_el = this.el.getSiblings(".text")[0], 
+this.increase_el && this.increase_el.addEvent("click", function(t) {
+t && t.stop();
+var e = moment(this.el.get("value"), "YYYY-MM-DD");
+e.add("days", 1), this.el.set("value", e.format("YYYY-MM-DD")), this.updateText(e), 
+this.fireEvent("change", this.getValue());
+}.bind(this)), this.decrease_el && this.decrease_el.addEvent("click", function(t) {
+t && t.stop();
+var e = moment(this.el.get("value"), "YYYY-MM-DD"), i = moment().add("days", 2);
+e.isSame(i, "days") || e.subtract("days", 1), this.el.set("value", e.format("YYYY-MM-DD")), 
+this.updateText(e), this.fireEvent("change", this.getValue());
+}.bind(this));
+},
+updateText:function(t) {
+ns_format = Harrys.IS_MOBILE ? "MM/DD/YYYY" :"D MMMM, YYYY", this.text_el.set("text", t.format(ns_format));
+},
+getValue:function() {
+return this.el.get("value");
+}
+}), PasswordInput = new Class({
+Extends:Input,
+options:{
+required:!0
+},
+initialize:function(t, e) {
+this.setOptions(e), this.parent(t, this.options), this.checks.push(this._lengthCheck.bind(this));
+},
+_lengthCheck:function(t) {
+var e = this.el.get("value");
+0 === e.length || e.length >= 8 ? t() :t(I18n.t("js.Inputs.PasswordInput.error"));
+}
+}), QuantityInput = new Class({
+Extends:RegexInput,
+options:{
+regex:/^\d+$/
+},
+initialize:function(t, e) {
+this.setOptions(e), this.parent(t, this.options), this.el.addEvents({
+input:function() {
+this.el.get("value").toInt() < 1 && this.el.set("value", 1), this.el.get("value").toInt() > 99 && this.el.set("value", 99);
+}.bind(this),
+blur:function() {
+("" === this.el.get("value") || this.el.get("value").toInt() < 1) && this.el.set("value", 1), 
+this.el.get("value").toInt() > 99 && this.el.set("value", 99);
+}.bind(this),
+keyup:function(t) {
+var e;
+t && "up" == t.key ? (e = this.get("value").toInt(), this.set("value", ++e), this.fireEvent("change", e)) :t && "down" == t.key && (e = this.get("value").toInt(), 
+this.set("value", --e), this.fireEvent("change", e));
+}
+}), this.increase_el = this.el.getSiblings(".increase")[0], this.decrease_el = this.el.getSiblings(".decrease")[0], 
+this.increase_el && this.increase_el.addEvent("click", function() {
+var t = this.el.get("value").toInt();
+t < 99 && this.el.set("value", ++t), this.fireEvent("change", this.getValue());
+}.bind(this)), this.decrease_el && this.decrease_el.addEvent("click", function() {
+var t = this.el.get("value").toInt();
+t > 1 && this.el.set("value", --t), this.fireEvent("change", this.getValue());
+}.bind(this));
+}
+}), ProfileForm = new Class({
+Implements:[ Events, Options ],
+options:{},
+$validations:[],
+inputs:{},
+initialize:function(t, e) {
+this.setOptions(e), this.root_el = t, this.name = this.root_el.get("name") || this.options.name, 
+this._setupInputs(), this.addValidation(this._checkInputs.bind(this));
+},
+_setupInputs:function() {
+this.inputs = _.reduce(this.root_el.getElements(".field input"), function(t, e) {
+var i = new Input(e, {
+required:"false" !== e.get("data-required"),
+flashMessage:!1,
+appendErrors:!0
+});
+return t[i.name] = i, t;
+}, {});
+},
+getValue:function() {
+return _.reduce(this.inputs, function(t, e) {
+return t[e.name] = e.getValue(), t;
+}, {});
+},
+setValue:function(t) {
+return _.each(this.inputs, function(e, i) {
+t[i] && e.setValue(t[i]).onValidationPass();
+}), this;
+},
+unsetValue:function() {
+return _.each(this.inputs, function(t) {
+t.setValue("").onValidationPass();
+}), this;
+},
+validate:function(t) {
+this.$validations.length > 0 ? async.series(this.$validations, t) :t(null, {
+success:!0
+});
+},
+addValidation:function(t) {
+this.$validations.push(t);
+},
+removeValidation:function(t) {
+var e = this.$validations.indexOf(t);
+e !== -1 && delete this.$validations[e];
+},
+_checkInputs:function(t) {
+var e = [];
+_.each(this.inputs, function(t) {
+t.validate(function(t) {
+t && e.push(t);
+});
+}), e.length > 0 ? t(_.uniq(e)) :t(null, {
+success:!0
+});
+},
+removeInput:function(t) {
+var e = this.inputs[t];
+e && (delete this.inputs[t], e.el.dispose());
+},
+enable:function() {
+return _.each(this.inputs, function(t) {
+t.enable();
+}), this;
+},
+disable:function() {
+return _.each(this.inputs, function(t) {
+t.disable();
+}), this;
+},
+show:function() {
+this.root_el.show();
+},
+hide:function() {
+this.root_el.hide();
+},
+clearInputs:function() {}
+}), EmailPasswordForm = new Class({
+Extends:ProfileForm,
+_setupInputs:function() {
+this.inputs.email = new EmailInput(this.root_el.getElement('input[type="email"]'), {
+required:!0,
+flashMessage:!1,
+appendErrors:!0
+}), this.inputs.password = new PasswordInput(this.root_el.getElement('input[name="password"]'), {
+required:!1,
+flashMessage:!1,
+appendErrors:!0
+}), this.inputs.new_password = new PasswordInput(this.root_el.getElement('input[name="current_password"]'), {
+required:!0,
+flashMessage:!1,
+appendErrors:!0
+}), _.each(this.inputs, function(t) {
+this.addValidation(t.validate.bind(t));
+}.bind(this));
+},
+clearInputs:function() {
+this.inputs.password.setValue(null), this.inputs.new_password.setValue(null);
+}
+}), ShavePlanForm = new Class({
+Extends:ProfileForm,
+_setupInputs:function() {
+this.inputs.quantity = new QuantityInput(this.root_el.getElement(".quantity input")), 
+this.inputs.interval = new IntervalInput(this.root_el.getElement(".interval input")), 
+this.inputs.next_send = new NextSendInput(this.root_el.getElement(".next-send input"));
+var t = this.root_el.getElement(".shipping select");
+t && (this.inputs.shipping_id = new Select(t));
+var e = this.root_el.getElement(".billing select");
+e && (this.inputs.billing_id = new Select(e)), this.inputs.quantity.addEvent("change", function(t) {
+this.fireEvent("quantity_change", t);
+}.bind(this));
+},
+updateSelectOption:function(t, e, i, s) {
+var n = this.inputs[t];
+return n && n.updateOptionEl(e, i, s), this;
+},
+addSelectOption:function(t, e, i, s) {
+var n = this.inputs[t];
+return n && n.addOptionEl(e, i, s), this;
+},
+removeSelectOption:function(t, e) {
+var i = this.inputs[t];
+return i && i.removeOptionEl(e), this;
+}
+}), Harrys = Harrys || {};
+
+window.addEvent("domready", function() {
+Stripe.setPublishableKey(Harrys.STRIPE_PUBLISHABLE_KEY);
+var t = $("details_name"), e = new ProfileForm(t.getElement(".form"), {
+name:"user"
+}), i = (new NameDetailsSection(t, e), $("details_email")), s = new EmailPasswordForm(i.getElement(".form"), {
+name:"user"
+}), n = (new EmailPasswordDetailsSection(i, s), $("details_shipping")), a = new AddressForm(n.getElement(".form.shipping_new"), {
+name:"shipping_address"
+}), o = new CreateShippingDetailsSection(n, a), l = (_.map(n.getElements("li"), o.setupShippingSection), 
+$("details_billing")), r = new PaymentForm(l.getElement(".form.billing_new.payment")), d = new AddressForm(l.getElement(".form.billing_new.address")), c = new CreateBillingDetailsSection(l, [ r, d ]);
+_.map(l.getElements("li"), c.setupBillingSection);
+});

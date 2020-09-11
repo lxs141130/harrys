@@ -1,0 +1,168 @@
+<div>
+  <form class="auth-form" *ngIf="!forgetPassword" style="width: 800px">
+    <label class="radio-field" (click)="OnNew()">
+      <input type="radio" class="radio-field--input" [checked]="newCustomer">
+      <label for="newCustomer" class="radio-field--icon"></label>
+      <label for="newCustomer" class="radio-field--label">New Customers</label>
+    </label>
+
+    <p class="auth-form--comment -padded" *ngIf="newCustomer">Create an account with us for quick checkout, to keep track of your order, and more.</p>
+
+    <label class="radio-field" (click)="OnReturn()" >
+      <input type="radio" class="radio-field--input" [checked]="returnCustomer">
+      <label for="returningCustomer" class="radio-field--icon"></label>
+      <label for="returningCustomer" class="radio-field--label">Returning Customers</label>
+    </label>
+  </form>
+
+  <form class="auth-form" style="width: 800px" *ngIf="!forgetPassword&&newCustomer" >
+  	<div class="alert alert-info" *ngIf="emailSent">An email has been sent to the email address you just registered. Please validate your email adderss and update your password info.</div>
+    <div>
+	      <h3 class="auth-form--title"  style="left: 50%;">Create Account</h3>
+    </div>
+    <div class="field">
+        <label for="email1" class="field--label">Email Address</label>&nbsp;<span *ngIf="emailExists" style="color:red;">Email already exists. Choose a different one.</span>
+        <input id="email1" type="email" class="field--input" name="email1" [(ngModel)]="email" required="required" autofocus="autofocus">
+    </div>
+    <div class="field" >
+      <label for="password1" class="field--label">Create Password</label>
+        <input id="password1" class="field--input" name="password1" [(ngModel)]="password" required="required" autofocus="autofocus" type="password" >
+    </div>
+    <div class="auth-form--comment -password">Minimum 8 characters</div>
+    <button class="button -medium -primary" (click)="onNewAccount()">Create Account</button>
+    <a href="https://www.harrys.com/auth/facebook" class="link -primary">Sign in with Facebook</a>
+    <br>
+  </form>
+
+  <form class="auth-form" style="width: 800px"  *ngIf="!forgetPassword&&returnCustomer" >
+    <div>
+      <h3 class="auth-form--title" >Sign In</h3>
+    </div>
+    <div class="field">
+      <label for="email2" class="field--label">Email Address</label>&nbsp;<span *ngIf="loginError" style="color:red;">Email do not exists or wrong password. Choose a different one.</span>
+      <input id="email2" class="field--input" name="email2" [(ngModel)]="credential.email" required="required" autofocus="autofocus">
+    </div>
+
+    <div class="field" >
+      <label for="password2" class="field--label"> Password</label>
+      <input id="password2" class="field--input" name="password2" [(ngModel)]="credential.password" required="required" autofocus="autofocus" type="password" >
+    </div>
+
+    <div class="auth-form--comment -password">Minimum 8 characters</div>
+    <button class="button -medium -primary" (click)="onSubmit()">Sign In</button>
+
+    <a href="https://www.harrys.com/auth/facebook" class="link -primary">Sign in with Facebook</a>
+    <br>
+    <span class="link -primary " (click)="onForget()">Forgot password?</span>
+  </form>
+</div>
+
+<div *ngIf="forgetPassword">
+  <span class="alert alert-warn" *ngIf="emailNotExists">Email doesn't exists.</span>
+  <span class="alert alert-success" *ngIf="forgetPasswordEmailSent">Email sent.</span>
+  <form class="auth-form" style="width: 800px" *ngIf="forgetPassword" >
+    <div>
+      <h3 class="auth-form--title"  style="left: 50%;">Forgot Password?</h3>
+    </div>
+    <div class="field">
+      <label for="recoverEmail" class="field--label">Email Address</label>
+      <input id="recoverEmail" type="email" class="field--input" name="recoverEmail" [(ngModel)]="recoverEmail" required="required" autofocus="autofocus">
+    </div>
+
+    <button class="button -medium -primary" (click)="onForgetPassword()">Reset Password</button>
+    <a class="link -primary" (click)="offForget()" *ngIf="!forgetPasswordEmailSent">Nevermind, go back to sign in</a>
+    <a class="link -primary" (click)="offForget()" *ngIf="forgetPasswordEmailSent">go to sign in</a>
+    <br>
+  </form>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!--<div class="container">-->
+	<!--<div class="row">-->
+		<!--<div>-->
+			<!--<h2><span>My Account</span></h2>-->
+		<!--</div>-->
+	<!--</div>-->
+
+	<!--<hr style="position: absolute;width:85%; height:6px; background-color: #333; z-index:-1; margin-top: -170px;" />-->
+
+	<!--<div class="row" style="margint-top:30px;">-->
+		<!--<div class="col-xs-3"></div>-->
+		<!--<div class="col-xs-9">-->
+			<!--<div class="panel-group">-->
+				<!--<div class="panel panel-default panel-faq" style="border:none;">-->
+					<!--<div class="panel-body" style="background-color: #ededed; margin-top:20px;">-->
+						<!--<md-tab-group>-->
+							<!--<md-tab label="Login">-->
+								<!--<div style="margin-top:20px;">-->
+									<!--<div *ngIf="loginError" style="color:red;">-->
+										<!--Incorrect email or password.-->
+									<!--</div>-->
+
+									<!--<form (ngSubmit)="onSubmit()">-->
+										<!--<div class="form-group">-->
+											<!--<label for ="email">Email *</label>-->
+											<!--<input type="email" class="form-control" id="email" name="email" [(ngModel)]="credential.email" required="required" autofocus="autofocus">-->
+											<!--<p style="color:#828282;">Enter your email</p>-->
+										<!--</div>-->
+										<!--<div class="form-group">-->
+											<!--<label for ="password">Password *</label>-->
+											<!--<input type="password" class="form-control" id="password" name="password" [(ngModel)]="credential.password" required="required" autofocus="autofocus">-->
+											<!--<p style="color:#828282;">Enter your password</p>-->
+										<!--</div>-->
+										<!--<button md-raised-button type="submit" class="mat-primary">Log In</button>-->
+									<!--</form>-->
+								<!--</div>-->
+							<!--</md-tab>-->
+							<!--<md-tab label="New Account">-->
+								<!--<div style="margin-top: 20px;">-->
+									<!--<div class="alert alert-info" *ngIf="emailSent">An email has been sent to the email address you just registered. Please validate your email adderss and update your password info.</div>-->
+									<!--<form (ngSubmit)="onNewAccount()">-->
+										<!--<div class="form-group">-->
+											<!--<label for="email">Email Address *</label>&nbsp;<span *ngIf="emailExists" style="color:red;">Email already exists. Choose a different one.</span>-->
+											<!--<input type="email" class="form-control" id="email" name="email" [(ngModel)]="email" required="required" >-->
+											<!--<label for="password">Password *</label>&nbsp;<span *ngIf="passwordTooShort" style="color:red;">Minimum 8 characters</span>-->
+											<!--<input type="password" class="form-control" id="password" name="password" [(ngModel)]="password" required="required" >-->
+											<!--<p style="color:#828282;">A valid e-mail address. All e-mails from the system will be sent to this address.</p>-->
+											<!--<p style="color:#828282;"> Create an account with us for quick checkout, to keep track of your order, and more.</p>-->
+										<!--</div>-->
+										<!--<button md-raised-button type="submit" class="mat-primary">Create new account</button>-->
+									<!--</form>-->
+								<!--</div>-->
+							<!--</md-tab>-->
+							<!--<md-tab label="Forget Password">-->
+								<!--<div style="margin-top: 20px;">-->
+									<!--<div class="alert alert-warn" *ngIf="emailNotExists">Email doesn't exists.</div>-->
+									<!--<div class="alert alert-success" *ngIf="forgetPasswordEmailSent">Email sent.</div>-->
+									<!--<form (ngSubmit)="onForgetPassword()">-->
+										<!--<div class="form-group">-->
+											<!--<label for="recoverEmail">Your Email Address *</label>-->
+											<!--<input type="email" class="form-control" id="recoverEmail" name="recoverEmail" [(ngModel)]="recoverEmail" required="required" >-->
+											<!--<p style="color:#828282;">Enter your registered email address.</p>-->
+										<!--</div>-->
+										<!--<button md-raised-button type="submit" class="mat-primary">Submit</button>-->
+									<!--</form>-->
+								<!--</div>-->
+							<!--</md-tab>-->
+						<!--</md-tab-group>-->
+					<!--</div>-->
+				<!--</div>-->
+			<!--</div>-->
+		<!--</div>-->
+	<!--</div>-->
+<!--</div>-->

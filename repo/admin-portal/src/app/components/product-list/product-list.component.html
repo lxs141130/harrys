@@ -1,0 +1,42 @@
+<div class="container">
+	<div class="table-responsive" style="margin-top: 30px;">
+		<table id="productListTable" class="table bordered highlight">
+			<thead>
+				<tr>
+					<th>
+						<input type="checkbox" (change)="updateSelected($event.target.checked)" />
+					</th>
+					<th>Title</th>
+					<th>Category</th>
+					<th>Color</th>
+					<th><i class="fa fa-usd" aria-hidden="true"></i> Price</th>
+					<th>Active?</th>
+					<th><i class="fa fa-cog" aria-hidden="true"></i> Operation</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr *ngFor = "let product of productList.slice(pageSize*(page-1),pageSize*page)">
+					<td>
+						<input hidden="hidden" name="id" />
+						<input type="checkbox" [checked]="allChecked" (change)="updateRemoveProductList($event.target.checked, product)" />
+					</td>
+					<td><a (click)="onSelect(product)" style="cursor:pointer">{{product.title}}</a></td>
+					<td>{{product.category}}</td>
+					<td>{{product.color}}</td>
+					<td>{{product.price|currency}}</td>
+					<td>{{product.active}}</td>
+					<td>
+						<input hidden="hidden" name="id" />
+						<button md-button (click)="openDialog(product)" value="delete"><span class="fa fa-times"></span> delete</button>
+					</td>
+				</tr>
+			</tbody>
+		</table>
+	</div>
+	<button md-raised-button class="mat-warn" id="deleteSelected" (click)="removeSelectedProducts()">Delete Selected</button>
+</div>
+<hr>
+
+<div class="container">
+	<ngb-pagination [collectionSize]="productList.length" [pageSize]="pageSize" [(page)]="page" [boundaryLinks]="true"></ngb-pagination>
+</div>

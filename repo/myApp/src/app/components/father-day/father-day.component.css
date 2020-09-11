@@ -1,0 +1,102 @@
+@import '../../../assets/father/base-ddad8cb92f51fca42306eb80871401678d48314ef269d45fe4115ea7f982c9d1.css';
+@import '../../../assets/father/fonts-ee83d6b22ec7f01d4620e0e7958af6759edf83ec4e3c733dc697b505bebfb84a.css';
+
+
+@media (min-width: 769px) {
+  .full-image-container.fathers-day-2017-razor {
+    height: 434.0px;
+  }
+  .fathers-day-2017-razor .image-container {
+    padding-top: 434.0px;
+    background-size: auto 434.0px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .full-image-container.fathers-day-2017-razor {
+    height: 620.0px;
+  }
+  .fathers-day-2017-razor .image-container {
+    padding-top: 620.0px;
+    background-size: auto 620.0px;
+  }
+}
+
+@media (min-width: 1500px) {
+  .full-image-container.fathers-day-2017-razor {
+    height: 620.0px;
+    min-height: 620.0px;
+    max-width: 1500px;
+    margin: 0 auto;
+  }
+  .fathers-day-2017-razor .image-container {
+    background-size: cover;
+    padding-top: 620.0px;
+  }
+}
+
+@media (min-width: 769px) {
+  .full-image-container.fathers-day-2017-stand {
+    height: 434.0px;
+  }
+  .fathers-day-2017-stand .image-container {
+    padding-top: 434.0px;
+    background-size: auto 434.0px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .full-image-container.fathers-day-2017-stand {
+    height: 620.0px;
+  }
+  .fathers-day-2017-stand .image-container {
+    padding-top: 620.0px;
+    background-size: auto 620.0px;
+  }
+}
+
+@media (min-width: 1500px) {
+  .full-image-container.fathers-day-2017-stand {
+    height: 620.0px;
+    min-height: 620.0px;
+    max-width: 1500px;
+    margin: 0 auto;
+  }
+  .fathers-day-2017-stand .image-container {
+    background-size: cover;
+    padding-top: 620.0px;
+  }
+}
+
+@media (min-width: 769px) {
+  .full-image-container.fathers-day-2017-lp {
+    height: 434.0px;
+  }
+  .fathers-day-2017-lp .image-container {
+    padding-top: 434.0px;
+    background-size: auto 434.0px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .full-image-container.fathers-day-2017-lp {
+    height: 620.0px;
+  }
+  .fathers-day-2017-lp .image-container {
+    padding-top: 620.0px;
+    background-size: auto 620.0px;
+  }
+}
+
+@media (min-width: 1500px) {
+  .full-image-container.fathers-day-2017-lp {
+    height: 620.0px;
+    min-height: 620.0px;
+    max-width: 1500px;
+    margin: 0 auto;
+  }
+  .fathers-day-2017-lp .image-container {
+    background-size: cover;
+    padding-top: 620.0px;
+  }
+}

@@ -1,0 +1,14 @@
+window.addEvent("domready", function() {
+_.each($$(".color-picker"), function(e) {
+var t = e.getElement(".product-shot");
+e.getElements(".colors span");
+_.each(e.getElements(".colors > div"), function(a) {
+var n = "data-preload-image";
+new Retina().isRetina() && (n += "-2x");
+var c = a.get(n);
+a.addEvent("click", function(n) {
+n.stop(), e.getElement(".active").removeClass("active"), a.addClass("active"), t.get("src") !== c && t.set("src", c);
+});
+});
+});
+});

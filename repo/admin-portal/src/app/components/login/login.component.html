@@ -1,0 +1,27 @@
+<div style="background-color: #d0d0d0">
+	<div [hidden]="!loggedIn">
+			<h2 style="color: red;position: absolute;margin-left: 100px;margin-top: 300px">You have logged in!</h2>
+			<h2 style="color: white;position: absolute;margin-left: 100px;margin-top: 200px">
+	The shaving company that’s fixing shaving</h2>
+		</div>
+	<img  src="assets/apbg.jpg" style="width: 100%;height:625px">
+	<div class="container">
+		
+		<div [hidden]="loggedIn">
+			<md-grid-list cols="6" [style.margin-top]="'20px'">
+				<md-grid-tile [colspan]="1"></md-grid-tile>
+				<md-grid-tile [colspan]="4">
+					<form (ngSubmit)="onSubmit()">
+						<md-input-container class="full-width">
+							<input type="text" mdInput [(ngModel)]="credential.email" name="email" id='email' placeholder="Your Email">
+						</md-input-container>
+						<md-input-container class="full-width">
+							<input type="password" mdInput [(ngModel)]="credential.password" name="password" id='password' placeholder="Your Password">
+						</md-input-container>
+						<button md-raised-button type="submit" class="mat-primary">Login</button>
+					</form>
+				</md-grid-tile>
+			</md-grid-list>
+		</div>	
+	</div>
+</div>

@@ -1,0 +1,12 @@
+<md-toolbar class="mat-warn">
+  	<div class="navbar-header">
+		<li style="display:inline;padding-top:10px">
+			<i class="fa fa-home" aria-hidden="true" routerLink="/login"><a class="navbar-brand pointer header-logo"></a></i>
+		</li>
+	</div>
+  <span class="example-spacer"></span>
+  <span *ngIf="loggedIn"><a md-button routerLink="/productList"><i class="fa fa-list" ></i> View Product List</a></span>
+  <span *ngIf="loggedIn"><a md-button routerLink="/addNewProduct" ><i class="fa fa-plus"></i> Add a Product</a></span>
+  <span *ngIf="loggedIn"><a md-button (click)="logout()"><i class="fa fa-sign-out"></i> Logout</a></span>
+</md-toolbar>
+

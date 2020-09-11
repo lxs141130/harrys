@@ -1,0 +1,669 @@
+var Instantiate = {
+one:function(t, e, i) {
+var n = document.getElement(t);
+return n ? new e(n, i) :null;
+},
+each:function(t, e, i) {
+var n = document.getElements(t);
+return _.map(n, function(t) {
+return new e(t, i);
+});
+}
+}, Validations = new Class({
+$validations:[],
+validate:function(t, e) {
+e = e || "parallel", this.$validations.length > 0 ? async[e](this.$validations, function(e, i) {
+e ? this._onInvalid(e, i, t) :this._onValid(e, i, t);
+}.bind(this)) :this._onValid(null, {
+success:!0
+}, t);
+},
+addValidation:function(t) {
+return this._getIndexByValidation(t) === -1 && this.$validations.push(t), this;
+},
+addValidations:function(t) {
+return _.each(t, this.addValidation.bind(this)), this;
+},
+removeValidation:function(t) {
+var e = this._getIndexByValidation(t);
+return this.$validations.splice(e, 1), this;
+},
+removeValidations:function() {
+return this.$validations = [], this;
+},
+_getIndexByValidation:function(t) {
+return this.$validations.indexOf(t);
+},
+_onValid:function(t, e, i) {
+if (_.isFunction(i)) return i(t, e);
+},
+_onInvalid:function(t, e, i) {
+if (_.isFunction(i)) return i(t);
+}
+}), BaseFieldset = new Class({
+Implements:[ Events, Options, Validations ],
+options:{
+fieldset_selector:"[data-fieldset]",
+field_selector:"[data-field]",
+field_input_selector:"[data-field-input]",
+field_type_attribute:"data-field-type",
+fieldset_type_attribute:"data-fieldset-type"
+},
+initialize:function(t) {
+this.root_el = t, this.name = this.root_el.get("data-name"), this.fields = this._setupFields(this.root_el), 
+this.fieldsets = this._setupFieldsets(this.root_el), this.field_like_things = _.extend({}, this.fieldsets, this.fields), 
+_.each(this.field_like_things, function(t) {
+t.addEvents({
+change:function() {
+this.fireEvent("change");
+}.bind(this),
+focus:function() {
+this.fireEvent("focus");
+}.bind(this),
+blur:function() {
+this.fireEvent("blur");
+}.bind(this)
+});
+}.bind(this)), this.addValidation(this.validateFields.bind(this));
+},
+getValue:function() {
+return _.reduce(this.field_like_things, function(t, e, i) {
+return t[i] = e.getValue(), t;
+}, {});
+},
+setValue:function(t) {
+return _.each(this.field_like_things, function(e, i) {
+t[i] && e.setValue(t[i]);
+}), this;
+},
+clearValue:function(t) {
+return t = t || {}, t.exclude = t.exclude || [], _.each(this.field_like_things, function(e) {
+_.contains(t.exclude, e.name) || e.clearValue();
+}), this;
+},
+validateFields:function(t) {
+async.each(_.values(this.field_like_things), function(t, e) {
+t.validate(e);
+}, function(e) {
+var i;
+e && (i = e), t(i);
+});
+},
+_setupFields:function(t) {
+var e = _.reduce(this.getTopLevelFieldEls(t), function(t, e) {
+var i = FieldFactory.build(e);
+return t[i.name] = i, t;
+}, {});
+return e;
+},
+_setupFieldsets:function(t) {
+var e = _.reduce(this.getTopLevelFieldsetEls(t), function(t, e) {
+var i = FieldsetFactory.build(e);
+return t[i.name] = i, t;
+}, {});
+return e;
+},
+getAllFieldEls:function(t) {
+return Array.from(t.getElements(this.options.field_selector));
+},
+getAllFieldsetEls:function(t) {
+return Array.from(t.getElements(this.options.fieldset_selector));
+},
+getTopLevelFieldEls:function(t) {
+var e = this.getAllFieldEls(t), i = this.getAllFieldsetEls(t), n = _.flatten(_.map(i, this.getAllFieldEls.bind(this)));
+return _.difference(e, n);
+},
+getTopLevelFieldsetEls:function(t) {
+var e = this.getAllFieldsetEls(t), i = _.flatten(_.map(e, this.getAllFieldsetEls.bind(this)));
+return _.difference(e, i);
+}
+}), FieldsetFactory = {
+type_attribute:"data-fieldset-type",
+build:function(t) {
+var e = t.get(this.type_attribute), i = this.getConstructor(e);
+return new i(t);
+},
+getConstructor:function(t) {
+var e = {
+"default":BaseFieldset
+};
+return e[t] || e["default"];
+}
+}, BaseField = new Class({
+Implements:[ Events, Options, Validations ],
+options:{
+input_selector:"[data-field-input]",
+label_selector:"[data-field-label]",
+input_name_attribute:"name",
+empty_class:"_empty",
+error_class:"_error",
+is_required_attribute:"data-field-is-required",
+is_numeric_attribute:"data-field-numeric",
+is_length_constrained_attribute:"data-field-length-constrained",
+maxlength_attribute:"maxlength",
+minlength_attribute:"minlength"
+},
+initialize:function(t, e) {
+this.setOptions(e), this.root_el = t, this.input_els = this.root_el.getElements(this.options.input_selector), 
+this.label_els = this.root_el.getElements(this.options.label_selector), this.input_el = this.input_els[0], 
+this.label_el = this.label_els[0], this.name = this.input_el.get(this.options.input_name_attribute), 
+this.input_els.addEvents({
+change:this.onInputChange.bind(this),
+input:this.onInputInput.bind(this),
+focus:this.onInputFocus.bind(this),
+blur:this.onInputBlur.bind(this)
+}), this.addValidation(this.validateRequired.bind(this)), this.addValidation(this.validateNumeric.bind(this)), 
+this.addValidation(this.validateLength.bind(this)), this.setEmptyState();
+},
+get:function(t) {
+return this.input_el.get(t);
+},
+set:function(t, e) {
+return this.input_el.set(t, e), this;
+},
+getValue:function() {
+return this.get("value");
+},
+setValue:function(t) {
+return this.set("value", t), this.onInputChange(), this;
+},
+clearValue:function() {
+return this.setValue(""), this.setEmptyState(), this;
+},
+setLabel:function(t) {
+return this.label_el.set("text", t), this;
+},
+isEmpty:function() {
+return !this.getValue();
+},
+isFocused:function() {
+return document.activeElement === this.input_el;
+},
+shouldHaveEmptyState:function() {
+return !this.isFocused() && this.isEmpty();
+},
+setEmptyState:function() {
+return this.shouldHaveEmptyState() ? (this.root_el.addClass(this.options.empty_class), 
+!0) :(this.root_el.removeClass(this.options.empty_class), !1);
+},
+setErrorState:function(t) {
+t ? this.root_el.addClass(this.options.error_class) :this.root_el.removeClass(this.options.error_class);
+},
+onInputChange:function() {
+return this.setEmptyState(), this.fireEvent("change", this.getValue()), this;
+},
+onInputInput:function() {
+return this.setErrorState(!1), this.fireEvent("input", this.getValue()), this;
+},
+onInputFocus:function() {
+return this.setEmptyState(), this.fireEvent("focus"), this;
+},
+onInputBlur:function() {
+return this.setEmptyState(), this.fireEvent("blur"), this.validate(this.onBlurValidate.bind(this)), 
+this;
+},
+onBlurValidate:function(t) {
+this.setErrorState(t);
+},
+isRequired:function() {
+return this.root_el.hasAttribute(this.options.is_required_attribute);
+},
+isLengthConstrained:function() {
+return this.root_el.hasAttribute(this.options.is_length_constrained_attribute);
+},
+validateRequired:function(t) {
+return this.isRequired() && !this.getValue() ? t("Missing Required Field") :t();
+},
+isNumeric:function() {
+return this.root_el.hasAttribute(this.options.is_numeric_attribute);
+},
+validateNumeric:function(t) {
+return this.isNumeric() && null === Number.from(this.getValue()) ? t("Field Must Be a Number") :t();
+},
+maxLength:function() {
+var t = this.get(this.options.maxlength_attribute);
+return !!t && t.toInt();
+},
+minLength:function() {
+var t = this.get(this.options.minlength_attribute);
+return !!t && t.toInt();
+},
+validateLength:function(t) {
+if (!this.isLengthConstrained()) return t();
+var e = this.maxLength(), i = this.minLength(), n = this.getValue();
+return n && i && n.length < i ? t("Minimum length " + i + " characters.") :n && e && n.length > e ? t("Maximum length " + e + " characters.") :t();
+}
+}), IncrementField = new Class({
+Extends:BaseField,
+options:{
+increment_action_selector:"[data-field-increment-action]",
+increment_action_attribute:"data-field-increment-action",
+minimum_attribute:"data-field-minimum",
+maximum_attribute:"data-field-maximum",
+increase_type:"increase",
+decrease_type:"decrease",
+increment_step:1,
+inactive_class:"_inactive"
+},
+initialize:function(t, e) {
+this.parent(t, e), this.minimum = this.root_el.get(this.options.minimum_attribute) || -(1 / 0), 
+this.maximum = this.root_el.get(this.options.maximum_attribute) || 1 / 0, this.action_els = this.root_el.getElements(this.options.increment_action_selector), 
+_.each(this.action_els, function(t) {
+t.addEvent("click", this.onIncrementActionClick.bind(this));
+}.bind(this)), this.setInactiveActionStates(this.getValue().toInt());
+},
+set:function(t, e) {
+if (this.input_el.options) {
+var i = _.find(this.input_el.options, function(t) {
+return t.value.toInt() === e.toInt();
+});
+i && (this.input_el.options.selectedIndex = i.index);
+} else this.input_el.set(t, e);
+return this;
+},
+onIncrementActionClick:function(t) {
+var e = this.getValue().toInt(), i = t.target.get(this.options.increment_action_attribute);
+e = this.incrementValue(e, i), this.setInactiveActionStates(e), this.setValue(e);
+},
+incrementValue:function(t, e) {
+return e === this.options.increase_type ? t += this.options.increment_step :e === this.options.decrease_type && (t -= this.options.increment_step), 
+t = t.limit(this.minimum, this.maximum);
+},
+setInactiveActionStates:function(t) {
+_.each(this.action_els, function(e) {
+var i = e.get(this.options.increment_action_attribute), n = t >= this.maximum, s = t <= this.minimum, o = i === this.options.increase_type, l = i === this.options.decrease_type;
+n && o || s && l ? e.addClass(this.options.inactive_class) :e.removeClass(this.options.inactive_class);
+}.bind(this));
+}
+}), RadioField = new Class({
+Extends:BaseField,
+initialize:function(t, e) {
+this.parent(t, e), this.input_el = null, this.label_el = null;
+},
+get:function(t) {
+return this._checkedElement().get(t);
+},
+getValue:function() {
+var t = this._checkedElement();
+return t ? t.get("value") :null;
+},
+_checkedElement:function() {
+return _.find(this.input_els, function(t) {
+return t.get("checked");
+});
+}
+}), SelectField = new Class({
+Extends:BaseField,
+initialize:function(t, e) {
+this.parent(t, e), this.default_option_el = this.root_el.getElement("option[disabled][selected]:first-of-type"), 
+this.default_option_text = this.default_option_el ? this.default_option_el.get("text") :"";
+},
+replaceOptionEls:function(t) {
+return this.input_el.empty(), this.addOptionEl(this.default_option_text, "", {
+disabled:"disabled",
+selected:"selected"
+}), _.each(t, function(e, i) {
+var n = {
+selected:this.default_value === e
+};
+Array.isArray(t) && (i = e), this.addOptionEl(i, e, n);
+}.bind(this)), delete this.default_value, this;
+},
+updateOptionEls:function(t) {
+return _.each(t, function(t) {
+this.updateOptionEl(t.text, t.value, t.other_properties);
+}.bind(this)), this;
+},
+getOptionEls:function() {
+return this.input_el.getElements("option");
+},
+findOptionEl:function(t) {
+return _.find(this.getOptionEls(), function(e) {
+return e.get("value") === t;
+});
+},
+addOptionEl:function(t, e, i) {
+var n = _.extend({
+text:t,
+value:e
+}, i);
+return this.input_el.adopt(new Element("option", n)), this;
+},
+removeOptionEl:function(t) {
+return this.findOptionEl(t).destroy(), this;
+},
+updateOptionEl:function(t, e, i) {
+var n = this.findOptionEl(e), s = _.extend({
+text:t,
+value:e
+}, i);
+return n.set(s), this;
+}
+}), Kicksend = {
+mailcheck:{
+threshold:3,
+defaultDomains:[ "yahoo.com", "google.com", "hotmail.com", "gmail.com", "me.com", "aol.com", "mac.com", "live.com", "comcast.net", "googlemail.com", "msn.com", "hotmail.co.uk", "yahoo.co.uk", "facebook.com", "verizon.net", "sbcglobal.net", "att.net", "gmx.com", "mail.com", "outlook.com", "icloud.com" ],
+defaultTopLevelDomains:[ "co.jp", "co.uk", "com", "net", "org", "info", "edu", "gov", "mil", "ca" ],
+run:function(t) {
+t.domains = t.domains || Kicksend.mailcheck.defaultDomains, t.topLevelDomains = t.topLevelDomains || Kicksend.mailcheck.defaultTopLevelDomains, 
+t.distanceFunction = t.distanceFunction || Kicksend.sift3Distance;
+var e = function(t) {
+return t;
+}, i = t.suggested || e, n = t.empty || e, s = Kicksend.mailcheck.suggest(encodeURI(t.email), t.domains, t.topLevelDomains, t.distanceFunction);
+return s ? i(s) :n();
+},
+suggest:function(t, e, i, n) {
+t = t.toLowerCase();
+var s = this.splitEmail(t), o = this.findClosestDomain(s.domain, e, n);
+if (o) {
+if (o != s.domain) return {
+address:s.address,
+domain:o,
+full:s.address + "@" + o
+};
+} else {
+var l = this.findClosestDomain(s.topLevelDomain, i);
+if (s.domain && l && l != s.topLevelDomain) {
+var a = s.domain;
+return o = a.substring(0, a.lastIndexOf(s.topLevelDomain)) + l, {
+address:s.address,
+domain:o,
+full:s.address + "@" + o
+};
+}
+}
+return !1;
+},
+findClosestDomain:function(t, e, i) {
+var n, s = 99, o = null;
+if (!t || !e) return !1;
+i || (i = this.sift3Distance);
+for (var l = 0; l < e.length; l++) {
+if (t === e[l]) return t;
+n = i(t, e[l]), n < s && (s = n, o = e[l]);
+}
+return s <= this.threshold && null !== o && o;
+},
+sift3Distance:function(t, e) {
+if (null == t || 0 === t.length) return null == e || 0 === e.length ? 0 :e.length;
+if (null == e || 0 === e.length) return t.length;
+for (var i = 0, n = 0, s = 0, o = 0, l = 5; i + n < t.length && i + s < e.length; ) {
+if (t.charAt(i + n) == e.charAt(i + s)) o++; else {
+n = 0, s = 0;
+for (var a = 0; a < l; a++) {
+if (i + a < t.length && t.charAt(i + a) == e.charAt(i)) {
+n = a;
+break;
+}
+if (i + a < e.length && t.charAt(i) == e.charAt(i + a)) {
+s = a;
+break;
+}
+}
+}
+i++;
+}
+return (t.length + e.length) / 2 - o;
+},
+splitEmail:function(t) {
+var e = t.split("@");
+if (e.length < 2) return !1;
+for (var i = 0; i < e.length; i++) if ("" === e[i]) return !1;
+var n = e.pop(), s = n.split("."), o = "";
+if (0 == s.length) return !1;
+if (1 == s.length) o = s[0]; else {
+for (var i = 1; i < s.length; i++) o += s[i] + ".";
+s.length >= 2 && (o = o.substring(0, o.length - 1));
+}
+return {
+topLevelDomain:o,
+domain:n,
+address:e.join("@")
+};
+}
+}
+};
+
+"undefined" != typeof module && module.exports && (module.exports = Kicksend.mailcheck), 
+"undefined" != typeof window && window.jQuery && !function(t) {
+t.fn.mailcheck = function(t) {
+var e = this;
+if (t.suggested) {
+var i = t.suggested;
+t.suggested = function(t) {
+i(e, t);
+};
+}
+if (t.empty) {
+var n = t.empty;
+t.empty = function() {
+n.call(null, e);
+};
+}
+t.email = this.val(), Kicksend.mailcheck.run(t);
+};
+}(jQuery);
+
+var EmailField = new Class({
+Extends:BaseField,
+options:{
+mailcheck:Kicksend.mailcheck,
+message_class:"_has-message",
+hidden_class:"_hidden"
+},
+suggestionTemplate:_.template("Did you mean: <span class='field--message--email'><%= email %></span>?"),
+initialize:function(t, e) {
+this.parent(t, e), this.mailcheck = this.options.mailcheck, this.suggested_email_el = new Element("span.field--message._hidden"), 
+this.root_el.adopt(this.suggested_email_el);
+},
+onInputInput:function() {
+return this.checkEmailAddress(), this.setErrorState(!1), this.fireEvent("input", this.getValue()), 
+this;
+},
+checkEmailAddress:function() {
+this.mailcheck.run({
+email:this.getValue(),
+suggested:this.onSuggestedEmail.bind(this),
+empty:this.onEmptySuggestion.bind(this)
+});
+},
+onSuggestedEmail:function(t) {
+this.suggestion = t, this.root_el.addClass(this.options.message_class), suggestion_content = this.suggestionTemplate({
+email:this.suggestion.full
+}), this.suggested_email_el.set("html", suggestion_content).removeClass(this.options.hidden_class).removeEvents("click").addEvent("click", this.onSuggestionClick.bind(this));
+},
+onSuggestionClick:function() {
+this.setValue(this.suggestion.full), this.onEmptySuggestion();
+},
+onEmptySuggestion:function() {
+this.root_el.removeClass(this.options.message_class), this.suggested_email_el.addClass(this.options.hidden_class).empty().removeEvents("click");
+}
+}), CheckboxField = new Class({
+Extends:BaseField,
+initialize:function(t, e) {
+this.parent(t, e), this.input_el = null, this.label_el = null;
+},
+get:function(t) {
+return _.map(this.input_els, function(e) {
+return e.get(t);
+});
+},
+getValue:function() {
+return _.map(this.checkedElements(), function(t) {
+return t.get("value");
+});
+},
+checkedElements:function() {
+return _.select(this.input_els, function(t) {
+return t.get("checked");
+});
+},
+uncheckedElements:function() {
+return _.difference(this.input_els, this.checkedElements());
+}
+}), ToggleableCheckboxField = new Class({
+Extends:CheckboxField,
+initialize:function(t, e) {
+this.parent(t, e), _.each(this.input_els, function(t) {
+t.addEvent("change", this._setOrToggleValue.bind(this));
+}.bind(this));
+},
+setValue:function(t) {
+_.each(this.input_els, function(t) {
+t.set("checked", !1);
+});
+var e = _.find(this.input_els, function(e) {
+return e.get("value") === t;
+});
+return e && (e.set("checked", !0), this.onInputChange()), this;
+},
+_setOrToggleValue:function(t) {
+return t.target.get("checked") ? (this.setValue(t.target.get("value")), void this.onInputChange()) :void this.onInputChange();
+}
+}), FieldFactory = {
+mapping:{
+increment:IncrementField,
+select:SelectField,
+radio:RadioField,
+"default":BaseField,
+email:EmailField,
+checkbox:CheckboxField,
+"toggleable-checkbox":ToggleableCheckboxField
+},
+input_selector:"[data-field-input]",
+type_attribute:"data-field-type",
+build:function(t) {
+var e = t.get(this.type_attribute);
+e || (e = t.getElement(this.input_selector).get("tag"));
+var i = this.getConstructor(e);
+return new i(t);
+},
+getConstructor:function(t) {
+return this.mapping[t] || this.mapping["default"];
+}
+}, Button = new Class({
+Implements:[ Events, Options ],
+options:{},
+initialize:function(t, e) {
+this.el = t, this.setOptions(e), this.default_text = this.el.get("text"), this.el.addEvent("click", function(t) {
+this.fireEvent("click", t);
+}.bind(this));
+},
+setText:function(t) {
+this.el.set("text", t);
+},
+get:function(t) {
+return this.el.get(t);
+},
+enable:function(t) {
+this.el.set("text", t || this.default_text).removeClass("disabled").removeClass("_disabled").set("disabled", "").removeEvents("click").addEvent("click", function() {
+this.fireEvent("click");
+}.bind(this));
+},
+disable:function(t) {
+this.el.set("text", t || "Loading").addClass("disabled").addClass("_disabled").set("disabled", "true").removeEvents("click");
+}
+}), BaseForm = new Class({
+Extends:BaseFieldset,
+initialize:function(t, e) {
+this.parent(t, e), this.submit_button_el = this.root_el.getElement('button[type="submit"]'), 
+this.submit_button = new Button(this.submit_button_el), this.root_el.addEvents({
+submit:this.onFormSubmit.bind(this)
+});
+},
+onFormSubmit:function() {
+return this.validate(this.onSubmitValidate.bind(this)), !1;
+},
+onSubmitValidate:function(t) {
+if (t) {
+new Flash(t, "error");
+} else this.root_el.submit();
+},
+removeFieldNames:function(t) {
+t = t || {}, t.exclude = t.exclude || [], _.map(this.fields, function(e) {
+_.contains(t.exclude, e.input_el.name) || (e.input_el.name = "");
+});
+}
+}), LoginFormSwitcher = new Class({
+Implements:[ Options ],
+options:{
+title_selector:"[data-login-form-title]",
+comment_selector:"[data-login-form-comment]",
+radio_selector:"[data-login-form-radio]",
+submit_selector:"[data-login-form-submit]",
+password_label_selector:"[data-login-form-password]",
+forgot_selector:"[data-login-form-forgot]",
+hidden_class_name:"_hidden",
+content:{
+"new":{
+title:"Create Account",
+password_label:"Create Password",
+submit_text:"Create Account",
+form_action:"/users",
+show_comment:!0,
+show_forgot:!1
+},
+returning:{
+title:"Sign In",
+password_label:"Password",
+submit_text:"Sign In",
+form_action:"/users/sign_in",
+show_comment:!1,
+show_forgot:!0
+}
+}
+},
+initialize:function(t, e) {
+this.setOptions(e), this.root_el = t, this.title_el = this.root_el.getElement(this.options.title_selector), 
+this.submit_el = this.root_el.getElement(this.options.submit_selector), this.comment_el = this.root_el.getElement(this.options.comment_selector), 
+this.radio_els = this.root_el.getElements(this.options.radio_selector), this.password_label_el = this.root_el.getElement(this.options.password_label_selector), 
+this.forgot_el = this.root_el.getElement(this.options.forgot_selector), _.each(this.radio_els, function(t) {
+t.addEvent("change", this.reactToRadioChange.bind(this));
+}.bind(this)), this.reactToRadioChange();
+},
+reactToRadioChange:function() {
+var t = this.getSelectedOptionEl().get("value"), e = this.options.content[t];
+this.title_el.set("text", e.title), this.submit_el.set("text", e.submit_text), e.show_comment ? this.comment_el.removeClass(this.options.hidden_class_name) :this.comment_el.addClass(this.options.hidden_class_name), 
+this.root_el.set("action", e.form_action), this.password_label_el.set("text", e.password_label), 
+e.show_forgot ? this.forgot_el.removeClass(this.options.hidden_class_name) :this.forgot_el.addClass(this.options.hidden_class_name);
+},
+getSelectedOptionEl:function() {
+return _.findWhere(this.radio_els, {
+checked:!0
+});
+}
+}), Toggler = new Class({
+Implements:[ Options ],
+options:{
+_document:document,
+name_attr:"data-toggler",
+hide_on_attr:"data-toggler-hide-on",
+show_on_attr:"data-toggler-show-on",
+hidden_class_name:"_hidden"
+},
+initialize:function(t, e) {
+this.setOptions(e), this._document = this.options._document, this.trigger_el = t, 
+this.name = this.trigger_el.get(this.options.name_attr), this.hide_on_els = this.getElementsByAttr(this.options.hide_on_attr), 
+this.show_on_els = this.getElementsByAttr(this.options.show_on_attr), this.trigger_el.addEvent("click", this.onTriggerClick.bind(this));
+},
+selectorTemplate:_.template('[<%= attr %>*="<%= value %>"]'),
+getElementsByAttr:function(t) {
+var e = this.selectorTemplate({
+attr:t,
+value:this.name
+});
+return this._document.getElements(e);
+},
+onTriggerClick:function() {
+_.each(this.hide_on_els, function(t) {
+t.addClass(this.options.hidden_class_name);
+}.bind(this)), _.each(this.show_on_els, function(t) {
+t.removeClass(this.options.hidden_class_name);
+}.bind(this));
+}
+});
+
+window.addEvent("domready", function() {
+Instantiate.each("[data-form]", BaseForm), Instantiate.each("[data-switchable]", LoginFormSwitcher), 
+Instantiate.each("[data-toggler]", Toggler);
+});

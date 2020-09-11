@@ -1,0 +1,38 @@
+window.dataLayer = window.dataLayer || [], function(e) {
+var i = "optimizelyRedirect", t = {}, n = {};
+if (n.getRelevantExperimentIds = function() {
+var i = e.data.state.activeExperiments, a = i || [], r = t.getRedirectVariationId();
+return r && a.push(n.getExperimentId(r)), a;
+}, n.getExperimentId = function(e) {
+var i;
+for (var t in optimizely.data.experiments) {
+var n = optimizely.data.experiments[t];
+if (n.variation_ids.indexOf(e) > -1) {
+i = t;
+break;
+}
+}
+return i;
+}, t.getRedirectCookie = function() {
+return cookie.get(i);
+}, t.getRedirectVariationId = function() {
+return t.initializeRedirectVariationId(), t.variationId;
+}, t.initializeRedirectVariationId = function() {
+var e = t.getRedirectCookie() || "|";
+t.variationId = e.split("|")[0];
+}, window.cookie = {
+get:function(e) {
+return e ? decodeURIComponent(document.cookie.replace(new RegExp("(?:(?:^|.*;)\\s*" + encodeURIComponent(e).replace(/[\-\.\+\*]/g, "\\$&") + "\\s*\\=\\s*([^;]*).*$)|^.*$"), "$1")) || null :null;
+}
+}, e) {
+for (var a in n.getRelevantExperimentIds()) {
+var r = n.getRelevantExperimentIds()[a], o = "(experiment " + r + ") " + e.allExperiments[r].name, d = "(variation " + e.variationIdsMap[r] + ") " + e.variationNamesMap[r];
+window.dataLayer.push({
+event:"GAEvent",
+eventCategory:"optimizely",
+eventAction:o,
+eventLabel:d
+});
+}
+}
+}(window.optimizely);

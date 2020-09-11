@@ -1,0 +1,36 @@
+
+ .hero-container .hero-cta {
+      background-color: #E15237
+    }
+    .hero-container .hero-cta:hover {
+      background-color: #E07B5D
+    }
+    .hero-container .hero-cta:active {
+      background-color: #D1310F
+    }
+    .getFree {
+      font-family:museo-sans;
+      color:#263645;
+      letter-spacing:0.5px;
+      line-height:24px;
+      font-size:13px;
+      padding-top:6px;
+      padding-bottom:6px;
+      background-color:#F7F7F7;
+      text-align:center;
+      position:relative;
+      top:-36px;
+      margin-bottom:0
+    }
+
+    .trial{
+      display:inline;
+      text-decoration:underline;
+      font-family:museo-sans;
+      color:#263645
+    }
+
+    .bgPicture{
+      background-image: url(&#39;https://harrysx-a.akamaihd.net/assets/images/hero_background_desktop_images/attachments/66e7f1b6f3706759d68d841d3f50b125722c7ee8.jpg&#39;); 
+      height: 500.0px;
+    }
